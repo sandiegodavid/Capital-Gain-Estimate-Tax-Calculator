@@ -215,6 +215,7 @@ class InvestmentGainAppTest(unittest.TestCase):
         app = InvestmentGainWebApp(
             finder_folder_chooser=choose_folder,
             records_root_provider=lambda: self.root,
+            records_root_saver=lambda root: root,
         )
         server = ThreadingHTTPServer(("127.0.0.1", 0), app.handler())
         thread = Thread(target=server.handle_request)
@@ -554,7 +555,7 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('id="guidance-ordinary-income"', page)
         self.assertNotIn('name="taxable_income"', page)
         self.assertLess(page.index('id="ai-provider"'), page.index('id="guidance-button"'))
-        self.assertIn('const sync=', page)
+        self.assertIn('const syncProfileControls =', page)
         self.assertIn('Get Google Gemini API rate guidance', page)
         self.assertIn('id="guidance-dialog"', page)
         self.assertIn('id="switch-guidance-button"', page)
@@ -581,6 +582,8 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('Pay California estimated tax', guided_page)
         self.assertIn('See exact formula', guided_page)
         self.assertIn('Exact tax formula', guided_page)
+        self.assertIn('class="tax-workflow-actions"', guided_page)
+        self.assertIn('.tax-workflow-actions .formula-action', guided_page)
         self.assertIn('highest rate down', guided_page)
 
     def test_end_to_end_workbook_structure_and_numeric_types(self) -> None:
