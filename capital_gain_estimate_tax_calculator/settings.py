@@ -8,10 +8,10 @@ import tempfile
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from .records_layout import create_realized_gains_layout, resolve_realized_gains_root
 
 APP_DIR = Path(__file__).resolve().parent.parent
 LOCAL_CONFIG_PATH = APP_DIR / "config.local.json"
-REALIZED_GAINS_FOLDER_NAME = "Realized Gains"
 
 
 def _local_config(config_path: Path = LOCAL_CONFIG_PATH) -> dict[str, object]:
@@ -32,7 +32,7 @@ def realized_gains_root(config_path: Path = LOCAL_CONFIG_PATH) -> Path | None:
 
 def save_realized_gains_root(root: Path, config_path: Path = LOCAL_CONFIG_PATH) -> Path:
     """Persist one Finder-selected records root without replacing other local settings."""
-    records_root = _resolve_realized_gains_root(root)
+    records_root = resolve_realized_gains_root(root)
     config = _local_config(config_path)
     config["realized_gains_root"] = str(records_root)
     _write_local_config(config, config_path)
@@ -41,28 +41,8 @@ def save_realized_gains_root(root: Path, config_path: Path = LOCAL_CONFIG_PATH) 
 
 def create_realized_gains_skeleton(parent_folder: Path, year: int, config_path: Path = LOCAL_CONFIG_PATH) -> Path:
     """Create the standard records layout beneath a user-selected parent folder."""
-    parent_folder = parent_folder.expanduser().resolve()
-    if not parent_folder.is_dir():
-        raise ValueError("Choose an existing folder before setting up the records layout.")
-    if not 1900 <= year <= 2200:
-        raise ValueError("Choose a valid sale year before setting up the records layout.")
-    records_root = parent_folder / REALIZED_GAINS_FOLDER_NAME
-    (records_root / str(year) / "source").mkdir(parents=True, exist_ok=True)
-    (records_root / str(year) / "reports").mkdir(parents=True, exist_ok=True)
+    records_root = create_realized_gains_layout(parent_folder, year)
     return save_realized_gains_root(records_root, config_path)
-
-
-def _resolve_realized_gains_root(selected_folder: Path) -> Path:
-    """Resolve a selected records folder to a directory named Realized Gains."""
-    selected_folder = selected_folder.expanduser().resolve()
-    if not selected_folder.is_dir():
-        raise ValueError("Choose an existing Realized Gains folder or its parent folder.")
-    if selected_folder.name.casefold() == REALIZED_GAINS_FOLDER_NAME.casefold():
-        return selected_folder
-    records_root = selected_folder / REALIZED_GAINS_FOLDER_NAME
-    if records_root.is_dir():
-        return records_root
-    raise ValueError("The selected folder does not contain a Realized Gains folder.")
 
 
 def openai_api_key(config_path: Path = LOCAL_CONFIG_PATH) -> str | None:

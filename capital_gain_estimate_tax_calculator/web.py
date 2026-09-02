@@ -12,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from .models import ReportError, totals
+from .models import NormalizedReport, ReportError, totals
 from .dashboard_selection import DashboardSelection, selection_from_form
 from .dashboard_data import DashboardData, load_dashboard_data
 from .finder import choose_folder_in_finder
