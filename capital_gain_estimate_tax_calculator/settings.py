@@ -12,6 +12,22 @@ from .records_layout import create_realized_gains_layout, resolve_realized_gains
 
 APP_DIR = Path(__file__).resolve().parent.parent
 LOCAL_CONFIG_PATH = APP_DIR / "config.local.json"
+EXAMPLE_CONFIG_PATH = APP_DIR / "config.example.json"
+SENSITIVE_CONFIG_KEYS = frozenset({"openai_api_key", "gemini_api_key", "openrouter_api_key"})
+EDITABLE_CONFIG_KEYS = (
+    "realized_gains_root",
+    "ai_provider",
+    "openai_api_key",
+    "openai_model",
+    "gemini_api_key",
+    "gemini_model",
+    "openrouter_api_key",
+    "openrouter_model",
+    "filing_status",
+    "num_dependents",
+    "state_residence",
+    "other_ordinary_taxable_income",
+)
 
 
 def _local_config(config_path: Path = LOCAL_CONFIG_PATH) -> dict[str, object]:
@@ -21,6 +37,38 @@ def _local_config(config_path: Path = LOCAL_CONFIG_PATH) -> dict[str, object]:
     except (FileNotFoundError, OSError, json.JSONDecodeError):
         return {}
     return config if isinstance(config, dict) else {}
+
+
+def ensure_config_defaults(
+    config_path: Path = LOCAL_CONFIG_PATH,
+    example_path: Path = EXAMPLE_CONFIG_PATH,
+) -> dict[str, object]:
+    """Fill missing local settings from the safe, versioned example configuration."""
+    config = _local_config(config_path)
+    defaults = _local_config(example_path)
+    merged = {**defaults, **config}
+    if merged != config:
+        _write_local_config(merged, config_path)
+    return merged
+
+
+def editable_config(config_path: Path = LOCAL_CONFIG_PATH) -> dict[str, object]:
+    """Return local settings for the browser editor, retaining secret values locally."""
+    config = ensure_config_defaults(config_path)
+    return {key: config.get(key, "") for key in EDITABLE_CONFIG_KEYS}
+
+
+def save_editable_config(values: dict[str, list[str]], config_path: Path = LOCAL_CONFIG_PATH) -> None:
+    """Persist browser-edited settings without clearing an existing API key accidentally."""
+    config = ensure_config_defaults(config_path)
+    for key in EDITABLE_CONFIG_KEYS:
+        if key not in values:
+            continue
+        value = values[key][0].strip()
+        if key in SENSITIVE_CONFIG_KEYS and not value:
+            continue
+        config[key] = value
+    _write_local_config(config, config_path)
 
 
 def realized_gains_root(config_path: Path = LOCAL_CONFIG_PATH) -> Path | None:
@@ -112,14 +160,24 @@ def tax_input_defaults(config_path: Path = LOCAL_CONFIG_PATH) -> tuple[str, str]
 
 
 def save_tax_input_defaults(values: dict[str, list[str]], config_path: Path = LOCAL_CONFIG_PATH) -> None:
-    """Persist valid tax-pane inputs without exposing or replacing API credentials."""
-    if "state" not in values and "other_ordinary_taxable_income" not in values:
+    """Persist tax-profile inputs without exposing or replacing API credentials."""
+    profile_keys = {"state", "other_ordinary_taxable_income", "filing_status", "num_dependents", "ai_provider"}
+    if not profile_keys.intersection(values):
         return
     state = values.get("state", [""])[0].strip().upper()
     income = _non_negative_currency(values.get("other_ordinary_taxable_income", ["0"])[0])
     config = _local_config(config_path)
     config["state_residence"] = state
     config["other_ordinary_taxable_income"] = income
+    if "filing_status" in values:
+        config["filing_status"] = values["filing_status"][0].strip()
+    if "num_dependents" in values:
+        try:
+            config["num_dependents"] = max(0, int(values["num_dependents"][0]))
+        except (TypeError, ValueError):
+            pass
+    if "ai_provider" in values:
+        config["ai_provider"] = values["ai_provider"][0].strip().lower()
     _write_local_config(config, config_path)
 
 

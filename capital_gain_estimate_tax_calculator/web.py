@@ -15,18 +15,19 @@ from urllib.parse import parse_qs, urlencode, urlparse
 from .models import NormalizedReport, ReportError, totals
 from .dashboard_selection import DashboardSelection, selection_from_form
 from .dashboard_data import DashboardData, load_dashboard_data
-from .finder import choose_folder_in_finder
+from .finder import choose_folder_in_finder, picker_start_folder
 from .guidance_mapping import GuidanceResponse, MappedRate, TaxRateMapping, map_gain_rates
 from .guidance_modal import render_guidance_modal
 from .payment_websites import payment_website
 from .guidance_providers import PROVIDER_OPTIONS, provider_label
 from .guidance_review import GuidanceReviewService
 from .service import generate_report
-from .settings import available_report_years, create_realized_gains_skeleton, realized_gains_root, save_realized_gains_root, save_tax_input_defaults
+from .settings import SENSITIVE_CONFIG_KEYS, available_report_years, create_realized_gains_skeleton, editable_config, ensure_config_defaults, realized_gains_root, save_editable_config, save_realized_gains_root, save_tax_input_defaults
 from .tax_estimate import FILING_STATUSES, TaxAssumptions, TaxFormula, US_STATES, assumptions_from_form, build_tax_formula, estimate_taxes, state_name
 
 RecordsRootSaver = Callable[[Path], Path | None]
-FinderFolderChooser = Callable[[], Path | None]
+FinderFolderChooser = Callable[[Path | None], Path | None]
+RecordsRootProvider = Callable[[], Path | None]
 RecordsRootSkeletonCreator = Callable[[Path, int], Path]
 
 
@@ -37,6 +38,71 @@ def _currency(value: Decimal) -> str:
 
 def _escape(value: object) -> str:
     return html.escape(str(value), quote=True)
+
+
+LOCAL_SETTINGS_LABELS = {
+    "realized_gains_root": "Realized gains root",
+    "ai_provider": "Default AI provider",
+    "openai_api_key": "OpenAI API key",
+    "openai_model": "OpenAI model",
+    "gemini_api_key": "Google Gemini API key",
+    "gemini_model": "Gemini model",
+    "openrouter_api_key": "OpenRouter API key",
+    "openrouter_model": "OpenRouter model",
+    "filing_status": "Default filing status",
+    "num_dependents": "Default number of dependents",
+    "state_residence": "Default state residence",
+    "other_ordinary_taxable_income": "Default other ordinary taxable income ($)",
+}
+
+
+def _render_config_control(key: str, label: str, stored: object) -> str:
+    """Render one key-safe local setting control with supported-choice dropdowns."""
+    if key in SENSITIVE_CONFIG_KEYS:
+        detail = "Configured — leave blank to keep it" if stored else "Not configured"
+        return f'<label>{label}<input type="password" name="{key}" autocomplete="off" placeholder="{detail}"><small>{detail}</small></label>'
+    options_by_key = {
+        "ai_provider": PROVIDER_OPTIONS,
+        "filing_status": FILING_STATUSES,
+        "state_residence": US_STATES,
+    }
+    options = options_by_key.get(key)
+    if options:
+        rendered_options = "".join(
+            f'<option value="{_escape(value)}" {"selected" if value == stored else ""}>{_escape(name)}</option>'
+            for value, name in options
+        )
+        return f'<label>{label}<select name="{key}">{rendered_options}</select></label>'
+    return f'<label>{label}<input name="{key}" value="{_escape(stored)}"></label>'
+
+
+def _render_config_modal(values: dict[str, object]) -> str:
+    """Render the dashboard's local-only configuration dialog."""
+    controls = [_render_config_control(key, label, values.get(key, "")) for key, label in LOCAL_SETTINGS_LABELS.items()]
+    return f'''<style>
+  .local-settings-dialog {{ width:min(760px,94vw); max-height:90vh; padding:0; border:0; border-radius:14px; color:#102a43; box-shadow:0 24px 70px #102a4355 }} .local-settings-dialog::backdrop {{ background:#102a4388 }} .local-settings-note {{ margin:18px 22px 0; color:#627d98 }} .local-settings-form {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:18px 22px 22px; padding:0; border:0; box-shadow:none }} .local-settings-form label {{ display:grid; gap:5px; color:#627d98; font-size:12px; font-weight:700 }} .local-settings-form input,.local-settings-form select {{ min-height:38px; padding:8px; border:1px solid #b9c8d6; border-radius:7px; font:inherit }} .local-settings-form small {{ font-weight:400 }} .local-settings-actions {{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:12px }} .local-settings-actions p {{ margin:0; color:#627d98 }} @media(max-width:640px) {{ .local-settings-form {{ grid-template-columns:1fr }} }}
+</style><button id="open-local-settings" class="secondary-action" type="button">Local settings</button>
+<dialog id="local-settings-dialog" class="local-settings-dialog">
+  <div class="dialog-heading"><div><h2>Local settings</h2><p>Saved only in config.local.json on this Mac.</p></div><button id="close-local-settings" type="button" aria-label="Close">×</button></div>
+  <p class="local-settings-note">Missing settings are filled from config.example.json. API keys remain hidden; leave a key blank to keep it.</p>
+  <form id="local-settings-form" class="local-settings-form">{''.join(controls)}<div class="local-settings-actions"><p id="local-settings-status" role="status"></p><button type="submit">Save local settings</button></div></form>
+</dialog>
+<script>(() => {{
+  const button = document.getElementById("open-local-settings"), dialog = document.getElementById("local-settings-dialog"), closeButton = document.getElementById("close-local-settings"), form = document.getElementById("local-settings-form"), status = document.getElementById("local-settings-status");
+  if (!button || !dialog || !closeButton || !form || !status) return;
+  button.addEventListener("click", () => {{ status.textContent = ""; dialog.showModal(); }});
+  closeButton.addEventListener("click", () => dialog.close());
+  form.addEventListener("submit", async (event) => {{
+    event.preventDefault(); status.textContent = "Saving local settings…";
+    try {{
+      const response = await fetch("/settings", {{ method: "POST", headers: {{ Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" }}, body: new URLSearchParams(new FormData(form)) }});
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Could not save local settings.");
+      status.textContent = payload.message || "Local settings saved.";
+      form.querySelectorAll('input[type="password"]').forEach((input) => {{ input.value = ""; }});
+    }} catch (error) {{ status.textContent = error.message; }}
+  }});
+}})();</script>'''
 
 
 def _security_groups(report: NormalizedReport) -> list[tuple[str, list]]:
@@ -108,7 +174,8 @@ def _render_tax_section(
     )
     formula_button = _render_formula_button(formula)
     guidance_modal = render_guidance_modal(guidance_path is not None)
-    return f'''<section class="panel tax-panel"><div class="panel-heading"><h2>Estimated Tax</h2><span>Planning estimate — not tax advice · No liability assumed</span></div><form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}"><label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><button type="submit">Update estimate</button></form>{rate_cards}{formula_button}<div class="tax-results"><article><p>Federal estimate</p><strong>{_currency(estimate.federal)}</strong></article><article><p>State estimate{f" · {assumptions.state_code}" if assumptions.state_code else ""}</p><strong>{_currency(estimate.state)}</strong></article><article><p>Estimated total tax</p><strong>{_currency(estimate.total)}</strong></article></div>{state_requirement}<form id="guidance-form" class="guidance-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}"><input id="guidance-state" type="hidden" name="state" value="{assumptions.state_code}"><input id="guidance-filing-status" type="hidden" name="filing_status" value="{_escape(assumptions.filing_status)}"><input id="guidance-dependent-count" type="hidden" name="num_dependents" value="{assumptions.num_dependents}"><input id="guidance-ordinary-income" type="hidden" name="other_ordinary_taxable_income" value="{assumptions.other_ordinary_taxable_income:g}"><label class="guidance-provider">AI provider<select id="ai-provider" name="ai_provider">{_provider_options(assumptions)}</select></label><button id="guidance-button" type="button" {'disabled' if not assumptions.state_code else ''}>Get {provider_label(assumptions.ai_provider)} rate guidance</button></form>{guidance_modal}{saved_note}<div class="tax-actions">{federal_payment_button}{state_payment}</div><p class="tax-note">Tax is calculated incrementally from the approved response's bracket schedules. Federal short-term gains are treated as ordinary income. This planning estimate excludes deductions, credits, surtaxes, carryovers, and other tax-specific adjustments.</p><script>(()=>{{const provider=document.getElementById("ai-provider"),button=document.getElementById("guidance-button"),labels={{openai:"ChatGPT / OpenAI API",gemini:"Google Gemini API",openrouter:"OpenRouter API"}},pairs=[["state-residence","guidance-state"],["filing-status","guidance-filing-status"],["dependent-count","guidance-dependent-count"],["ordinary-income","guidance-ordinary-income"]];for(const [source,target] of pairs){{const from=document.getElementById(source),to=document.getElementById(target);if(from&&to){{const sync=()=>{{to.value=from.value;if(source==="state-residence")button.disabled=!from.value;}};from.addEventListener("input",sync);from.addEventListener("change",sync);sync();}}}}if(provider&&button){{const sync=()=>button.textContent=`Get ${{labels[provider.value]||"AI"}} rate guidance`;provider.addEventListener("change",sync);sync();}}}})();</script></section>'''
+    settings_modal = _render_config_modal(editable_config())
+    return f'''<section class="panel tax-panel"><div class="panel-heading"><h2>Estimated Tax</h2><span>Planning estimate — not tax advice · No liability assumed</span></div><form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}"><label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><button type="submit">Update estimate</button></form>{rate_cards}{formula_button}<div class="tax-results"><article><p>Federal estimate</p><strong>{_currency(estimate.federal)}</strong></article><article><p>State estimate{f" · {assumptions.state_code}" if assumptions.state_code else ""}</p><strong>{_currency(estimate.state)}</strong></article><article><p>Estimated total tax</p><strong>{_currency(estimate.total)}</strong></article></div>{state_requirement}<form id="guidance-form" class="guidance-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}"><input id="guidance-state" type="hidden" name="state" value="{assumptions.state_code}"><input id="guidance-filing-status" type="hidden" name="filing_status" value="{_escape(assumptions.filing_status)}"><input id="guidance-dependent-count" type="hidden" name="num_dependents" value="{assumptions.num_dependents}"><input id="guidance-ordinary-income" type="hidden" name="other_ordinary_taxable_income" value="{assumptions.other_ordinary_taxable_income:g}"><label class="guidance-provider">AI provider<select id="ai-provider" name="ai_provider">{_provider_options(assumptions)}</select></label><button id="guidance-button" type="button" {'disabled' if not assumptions.state_code else ''}>Get {provider_label(assumptions.ai_provider)} rate guidance</button></form>{settings_modal}{guidance_modal}{saved_note}<div class="tax-actions">{federal_payment_button}{state_payment}</div><p class="tax-note">Tax is calculated incrementally from the approved response's bracket schedules. Federal short-term gains are treated as ordinary income. This planning estimate excludes deductions, credits, surtaxes, carryovers, and other tax-specific adjustments.</p></section>'''
 
 
 def _render_rate_cards(
@@ -288,7 +355,7 @@ def _render_dashboard(
     </style></head><body><header><h1>Capital Gain Estimate Tax Calculator</h1><p>Understand realized gains and explore estimated taxes.</p></header><main>
     <form class="load-data-form" method="get" action="/dashboard" style="align-items:start"><label>Sale year<select id="sale-year" name="year">{options}</select></label><label class="source-folder-control">Source folder<input id="source-folder-value" type="hidden" name="source" value="{_escape(source)}"><span class="source-folder-row"><output id="source-folder-path" class="source-folder-path" title="{_escape(source)}">{_escape(source) if source else "No folder selected"}</output><button id="source-folder" class="source-folder-button" type="submit" formaction="/open-realized-gains-root" formmethod="post" formtarget="finder-result">Choose folder</button></span><span id="source-folder-status" class="source-folder-status" role="status"></span></label><label class="load-data-control"><span aria-hidden="true">&nbsp;</span><button class="load-data-button" type="submit" formaction="/dashboard" formmethod="get">Load data</button></label></form><iframe name="finder-result" hidden></iframe><form id="setup-realized-gains-form" method="post" action="/setup-realized-gains-root" target="finder-result" style="display:none"><input id="setup-realized-gains-parent" name="parent"><input id="setup-realized-gains-year" name="year"></form>{message}{download}{failure}{summary}
     <form class="report-actions" method="post" action="/generate" style="margin-top:18px"><input type="hidden" name="year" value="{_escape(selected_year)}"><input type="hidden" name="source" value="{_escape(source)}"><label>Report folder<input name="output" value="{_escape(output)}" placeholder="…/2026/reports"></label><label class="checkbox"><input name="audit" type="checkbox"> Keep audit files</label><label class="checkbox"><input name="overwrite" type="checkbox" checked> Archive existing report</label><button type="submit">Create Excel report</button></form>
-    </main><footer class="app-footer">Developed by DC Technology Consulting · Open-source, free use · <a href="/terms">Terms of Service</a></footer><script>const sourceFolderStatus=document.getElementById("source-folder-status"),sourceFolderValue=document.getElementById("source-folder-value"),sourceFolderPath=document.getElementById("source-folder-path"); window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!sourceFolderStatus)return; sourceFolderStatus.textContent=event.data.message; sourceFolderStatus.classList.toggle("error",!event.data.ok); if(event.data.source){{if(sourceFolderValue)sourceFolderValue.value=event.data.source;if(sourceFolderPath){{sourceFolderPath.textContent=event.data.source;sourceFolderPath.title=event.data.source;}}}}}}); const state=document.getElementById("state-residence"), guidanceState=document.getElementById("guidance-state"), guidanceButton=document.getElementById("guidance-button"), guidanceNote=document.getElementById("state-guidance-note"); if(state&&guidanceState&&guidanceButton){{const syncGuidance=()=>{{const selected=state.value; guidanceState.value=selected; guidanceButton.disabled=!selected; if(guidanceNote) guidanceNote.hidden=Boolean(selected);}}; state.addEventListener("change",syncGuidance); syncGuidance();}}</script><script>(()=>{{const status=document.getElementById("source-folder-status"),setupForm=document.getElementById("setup-realized-gains-form"),parent=document.getElementById("setup-realized-gains-parent"),year=document.getElementById("setup-realized-gains-year"),saleYear=document.getElementById("sale-year");window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!event.data.setup_parent||!status||!setupForm||!parent||!year)return;const button=document.createElement("button");button.type="button";button.textContent="Set up folders";button.addEventListener("click",()=>{{parent.value=event.data.setup_parent;year.value=saleYear?.value||String(new Date().getFullYear());setupForm.requestSubmit();}});status.replaceChildren(document.createTextNode("Create a standard Realized Gains folder here? "),button);}});}})();</script></body></html>'''
+    </main><footer class="app-footer">Developed by DC Technology Consulting · Open-source, free use · <a href="/terms">Terms of Service</a></footer><script>const sourceFolderStatus=document.getElementById("source-folder-status"),sourceFolderValue=document.getElementById("source-folder-value"),sourceFolderPath=document.getElementById("source-folder-path"); window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!sourceFolderStatus)return; sourceFolderStatus.textContent=event.data.message; sourceFolderStatus.classList.toggle("error",!event.data.ok); if(event.data.source){{if(sourceFolderValue)sourceFolderValue.value=event.data.source;if(sourceFolderPath){{sourceFolderPath.textContent=event.data.source;sourceFolderPath.title=event.data.source;}}}}}});</script><script>(()=>{{const status=document.getElementById("source-folder-status"),setupForm=document.getElementById("setup-realized-gains-form"),parent=document.getElementById("setup-realized-gains-parent"),year=document.getElementById("setup-realized-gains-year"),saleYear=document.getElementById("sale-year");window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!event.data.setup_parent||!status||!setupForm||!parent||!year)return;const button=document.createElement("button");button.type="button";button.textContent="Set up folders";button.addEventListener("click",()=>{{parent.value=event.data.setup_parent;year.value=saleYear?.value||String(new Date().getFullYear());setupForm.requestSubmit();}});status.replaceChildren(document.createTextNode("Create a standard Realized Gains folder here? "),button);}});}})();</script></body></html>'''
 
 
 class InvestmentGainWebApp:
@@ -299,12 +366,15 @@ class InvestmentGainWebApp:
         records_root_saver: RecordsRootSaver = save_realized_gains_root,
         finder_folder_chooser: FinderFolderChooser = choose_folder_in_finder,
         records_root_skeleton_creator: RecordsRootSkeletonCreator = create_realized_gains_skeleton,
+        records_root_provider: RecordsRootProvider = realized_gains_root,
     ) -> None:
+        ensure_config_defaults()
         self.latest_report: Path | None = None
         self.guidance_reviews = GuidanceReviewService()
         self.records_root_saver = records_root_saver
         self.finder_folder_chooser = finder_folder_chooser
         self.records_root_skeleton_creator = records_root_skeleton_creator
+        self.records_root_provider = records_root_provider
 
     def handler(self):
         application = self
@@ -347,12 +417,16 @@ class InvestmentGainWebApp:
                     self._send_html(_render_dashboard(selection, assumptions, error=str(exc)), HTTPStatus.BAD_REQUEST)
 
             def do_POST(self) -> None:  # noqa: N802
-                if self.path not in ("/generate", "/guidance-saved", "/guidance-query", "/guidance-save", "/open-realized-gains-root", "/setup-realized-gains-root"):
+                if self.path not in ("/generate", "/guidance-saved", "/guidance-query", "/guidance-save", "/open-realized-gains-root", "/setup-realized-gains-root", "/settings"):
                     self.send_error(HTTPStatus.NOT_FOUND); return
+                length = int(self.headers.get("Content-Length", "0"))
+                form = parse_qs(self.rfile.read(length).decode())
                 if self.path == "/open-realized-gains-root":
                     root = None
                     try:
-                        root = application.finder_folder_chooser()
+                        source_value = form.get("source", [""])[0].strip()
+                        initial_folder = picker_start_folder(source_value, application.records_root_provider())
+                        root = application.finder_folder_chooser(initial_folder)
                         if root is None:
                             self._send_finder_result("No folder was selected.", ok=True)
                         else:
@@ -361,8 +435,13 @@ class InvestmentGainWebApp:
                     except (ReportError, OSError, ValueError) as exc:
                         self._send_finder_result(str(exc), ok=False, status=HTTPStatus.BAD_REQUEST, setup_parent=root)
                     return
-                length = int(self.headers.get("Content-Length", "0"))
-                form = parse_qs(self.rfile.read(length).decode())
+                if self.path == "/settings":
+                    try:
+                        save_editable_config(form)
+                        self._send_json({"message": "Local settings saved."})
+                    except OSError as exc:
+                        self._send_json({"error": f"Could not save local settings: {exc}"}, HTTPStatus.BAD_REQUEST)
+                    return
                 if self.path == "/setup-realized-gains-root":
                     try:
                         parent = Path(form.get("parent", [""])[0])

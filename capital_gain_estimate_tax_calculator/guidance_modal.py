@@ -6,12 +6,15 @@ from __future__ import annotations
 def render_guidance_modal(has_saved_responses: bool) -> str:
     """Render the response-review dialog and its non-blocking controller."""
     switch_button = (
-        '<button id="switch-guidance-button" class="secondary-action" type="button">'
-        "Review or switch saved AI response</button>"
+        '<button id="switch-guidance-button" class="secondary-action" type="button" disabled>'
+        "No saved AI responses</button>"
+    )
+    profile_note = (
+        '<p id="guidance-profile-note" class="state-guidance-note" hidden></p>'
         if has_saved_responses
         else ""
     )
-    return switch_button + r'''
+    return switch_button + profile_note + r'''
 <dialog id="guidance-dialog" class="guidance-dialog">
   <div class="dialog-heading">
     <div><h2>AI rate guidance review</h2><p>Compare validated responses before choosing one.</p></div>
@@ -31,6 +34,14 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
   const progress = document.getElementById("guidance-progress");
   const grid = document.getElementById("guidance-response-grid");
   const roundMessage = document.getElementById("guidance-round-message");
+  const provider = document.getElementById("ai-provider");
+  const profileNote = document.getElementById("guidance-profile-note");
+  const profileInputs = [
+    document.getElementById("state-residence"),
+    document.getElementById("filing-status"),
+    document.getElementById("dependent-count"),
+    provider,
+  ].filter(Boolean);
   if (!form || !openButton || !dialog) return;
 
   let responses = [];
@@ -40,6 +51,69 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
   let errors = [];
   let controller = null;
   let runId = 0;
+  let profileRevision = 0;
+
+  const providerLabels = {
+    openai: "ChatGPT / OpenAI API",
+    gemini: "Google Gemini API",
+    openrouter: "OpenRouter API",
+  };
+
+  const activeProviderLabel = () => providerLabels[provider?.value] || "AI";
+  const activeProfileKey = () => JSON.stringify({
+    state: document.getElementById("state-residence")?.value || "",
+    filingStatus: document.getElementById("filing-status")?.value || "",
+    dependents: document.getElementById("dependent-count")?.value || "0",
+    provider: provider?.value || "",
+  });
+  const initialProfileKey = activeProfileKey();
+
+  const syncProfileControls = async () => {
+    const revision = ++profileRevision;
+    const state = document.getElementById("state-residence");
+    const profileFields = [
+      ["state-residence", "guidance-state"],
+      ["filing-status", "guidance-filing-status"],
+      ["dependent-count", "guidance-dependent-count"],
+      ["ordinary-income", "guidance-ordinary-income"],
+    ];
+    profileFields.forEach(([sourceId, targetId]) => {
+      const source = document.getElementById(sourceId);
+      const target = document.getElementById(targetId);
+      if (source && target) target.value = source.value;
+    });
+    const hasState = Boolean(state?.value);
+    if (profileNote) {
+      const changed = activeProfileKey() !== initialProfileKey;
+      profileNote.hidden = !changed;
+      profileNote.textContent = changed
+        ? "Tax profile changed. Review matching saved guidance or request new guidance before relying on the displayed estimate."
+        : "";
+    }
+    openButton.textContent = `Get ${activeProviderLabel()} rate guidance`;
+    openButton.disabled = !hasState;
+    if (!switchButton) return;
+    if (!hasState) {
+      switchButton.disabled = true;
+      switchButton.textContent = "Select a state to review saved guidance";
+      return;
+    }
+    switchButton.disabled = true;
+    switchButton.textContent = `Checking saved ${activeProviderLabel()} responses…`;
+    try {
+      const saved = await post("/guidance-saved");
+      if (revision !== profileRevision) return;
+      const count = saved.responses?.length || 0;
+      switchButton.disabled = count === 0;
+      switchButton.textContent = count
+        ? `Review or switch ${count} saved ${activeProviderLabel()} response${count === 1 ? "" : "s"}`
+        : `No saved ${activeProviderLabel()} responses`;
+    } catch (_error) {
+      if (revision !== profileRevision) return;
+      switchButton.disabled = true;
+      switchButton.textContent = `Saved ${activeProviderLabel()} responses unavailable`;
+    }
+  };
 
   const element = (tag, text, className) => {
     const node = document.createElement(tag);
@@ -226,6 +300,11 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
 
   openButton.addEventListener("click", open);
   if (switchButton) switchButton.addEventListener("click", open);
+  profileInputs.forEach((input) => {
+    input.addEventListener("input", syncProfileControls);
+    input.addEventListener("change", syncProfileControls);
+  });
+  syncProfileControls();
   closeButton.addEventListener("click", () => { abortQueries(); dialog.close(); });
   dialog.addEventListener("cancel", () => abortQueries());
 })();

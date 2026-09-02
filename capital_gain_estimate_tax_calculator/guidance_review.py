@@ -13,6 +13,7 @@ from .guidance_mapping import (
     map_bracket_rates,
     validate_guidance_response,
 )
+from .guidance_profile import GuidanceProfile
 from .guidance_store import GuidanceResponseRepository, GuidanceResponseStore
 from .tax_estimate import TaxAssumptions
 from .tax_guidance import request_tax_rate_guidance
@@ -46,12 +47,12 @@ class GuidanceReviewService:
 
     def load_candidates(self, output_dir: Path, year: int, assumptions: TaxAssumptions) -> tuple[GuidanceResponse, ...]:
         """Return every saved candidate compatible with the current household inputs."""
-        saved = self._response_store.load_all(output_dir, year, assumptions.ai_provider)
+        saved = self._response_store.load_all(output_dir, year, self._profile(assumptions))
         return tuple(validate_guidance_response(item.response, assumptions.filing_status) for item in saved)
 
     def load_selected(self, output_dir: Path, year: int, assumptions: TaxAssumptions) -> AppliedGuidance | None:
         """Load and apply the locally selected candidate, if one exists."""
-        saved = self._response_store.load_selected(output_dir, year, assumptions.ai_provider)
+        saved = self._response_store.load_selected(output_dir, year, self._profile(assumptions))
         if saved is None:
             return None
         return self.apply(saved.response, assumptions, saved.path)
@@ -66,7 +67,12 @@ class GuidanceReviewService:
     ) -> tuple[Path, ...]:
         """Validate and save each reviewed candidate with one selected marker."""
         validated = [validate_guidance_response(response, assumptions.filing_status) for response in responses]
-        return self._response_store.save(output_dir, year, assumptions.ai_provider, validated, selected_index)
+        return self._response_store.save(output_dir, year, self._profile(assumptions), validated, selected_index)
+
+    @staticmethod
+    def _profile(assumptions: TaxAssumptions) -> GuidanceProfile:
+        """Translate tax assumptions once at the persistence boundary."""
+        return GuidanceProfile.from_assumptions(assumptions)
 
     def apply(self, response: GuidanceResponse, assumptions: TaxAssumptions, path: Path) -> AppliedGuidance:
         """Map one validated response to the rates applicable to this household."""

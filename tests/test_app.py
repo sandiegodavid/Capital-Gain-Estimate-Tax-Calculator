@@ -14,23 +14,27 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+import yaml
+
 APP_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(APP_ROOT / "vendor"))
 sys.path.insert(0, str(APP_ROOT))
 
 from capital_gain_estimate_tax_calculator import generate_report, normalize_sources  # noqa: E402
 from capital_gain_estimate_tax_calculator.normalizer import detect_schema  # noqa: E402
+from capital_gain_estimate_tax_calculator.finder import picker_start_folder  # noqa: E402
 from capital_gain_estimate_tax_calculator.dashboard_selection import DashboardSelection, selection_from_form  # noqa: E402
 from capital_gain_estimate_tax_calculator.tax_estimate import TaxAssumptions, build_tax_formula, estimate_taxes  # noqa: E402
 from capital_gain_estimate_tax_calculator.guidance_prompt import TaxGuidancePromptBuilder  # noqa: E402
 from capital_gain_estimate_tax_calculator.guidance_providers import parse_gemini_response, parse_openrouter_response  # noqa: E402
 from capital_gain_estimate_tax_calculator.guidance_mapping import map_bracket_rates, map_gain_rates, validate_guidance_response  # noqa: E402
 from capital_gain_estimate_tax_calculator.payment_websites import payment_website  # noqa: E402
-from capital_gain_estimate_tax_calculator.settings import create_realized_gains_skeleton, save_realized_gains_root, save_tax_input_defaults, tax_input_defaults  # noqa: E402
+from capital_gain_estimate_tax_calculator.settings import editable_config, ensure_config_defaults, create_realized_gains_skeleton, save_editable_config, save_realized_gains_root, save_tax_input_defaults, tax_input_defaults  # noqa: E402
 from capital_gain_estimate_tax_calculator.guidance_store import GuidanceResponseStore  # noqa: E402
+from capital_gain_estimate_tax_calculator.guidance_profile import GuidanceProfile  # noqa: E402
 from capital_gain_estimate_tax_calculator.guidance_review import GuidanceReviewService  # noqa: E402
 from capital_gain_estimate_tax_calculator.tax_guidance import TaxGuidanceService  # noqa: E402
-from capital_gain_estimate_tax_calculator.web import InvestmentGainWebApp, _render_dashboard, _render_tax_section  # noqa: E402
+from capital_gain_estimate_tax_calculator.web import InvestmentGainWebApp, _render_config_modal, _render_dashboard, _render_tax_section  # noqa: E402
 
 
 CHASE_HEADERS = [
@@ -155,7 +159,7 @@ class InvestmentGainAppTest(unittest.TestCase):
         saved_roots: list[Path] = []
         app = InvestmentGainWebApp(
             records_root_saver=saved_roots.append,
-            finder_folder_chooser=lambda: self.root,
+            finder_folder_chooser=lambda _initial=None: self.root,
         )
         server = ThreadingHTTPServer(("127.0.0.1", 0), app.handler())
         thread = Thread(target=server.handle_request)
@@ -181,7 +185,7 @@ class InvestmentGainAppTest(unittest.TestCase):
         saved_roots: list[Path] = []
         app = InvestmentGainWebApp(
             records_root_saver=saved_roots.append,
-            finder_folder_chooser=lambda: self.root,
+            finder_folder_chooser=lambda _initial=None: self.root,
         )
         server = ThreadingHTTPServer(("127.0.0.1", 0), app.handler())
         thread = Thread(target=server.handle_request)
@@ -201,6 +205,40 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn("Realized gains folder saved.", payload)
         self.assertEqual(saved_roots, [self.root])
 
+    def test_source_folder_click_opens_chooser_at_existing_source(self) -> None:
+        initial_folders: list[Path | None] = []
+
+        def choose_folder(initial_folder: Path | None) -> Path:
+            initial_folders.append(initial_folder)
+            return self.root
+
+        app = InvestmentGainWebApp(
+            finder_folder_chooser=choose_folder,
+            records_root_provider=lambda: self.root,
+        )
+        server = ThreadingHTTPServer(("127.0.0.1", 0), app.handler())
+        thread = Thread(target=server.handle_request)
+        thread.start()
+        try:
+            request = Request(
+                f"http://127.0.0.1:{server.server_port}/open-realized-gains-root",
+                data=urlencode({"source": str(self.source)}).encode(),
+                method="POST",
+            )
+            with urlopen(request) as response:
+                payload = response.read().decode("utf-8")
+        finally:
+            thread.join(timeout=2)
+            server.server_close()
+
+        self.assertIn("Realized gains folder saved.", payload)
+        self.assertEqual(initial_folders, [self.root])
+
+    def test_picker_start_folder_prefers_records_root_only_when_source_is_present(self) -> None:
+        self.assertEqual(picker_start_folder(str(self.source), self.root), self.root)
+        self.assertEqual(picker_start_folder(str(self.source), None), self.source)
+        self.assertIsNone(picker_start_folder("", self.root))
+
     def test_records_layout_setup_creates_source_and_reports_folders(self) -> None:
         parent = self.root / "new-records-parent"
         parent.mkdir()
@@ -211,7 +249,46 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertEqual(root, (parent / "Realized Gains").resolve())
         self.assertTrue((root / "2026" / "source").is_dir())
         self.assertTrue((root / "2026" / "reports").is_dir())
-        self.assertEqual(json.loads(config_path.read_text(encoding="utf-8"))["realized_gains_root"], str(root))
+
+    def test_config_editor_fills_missing_defaults_without_overwriting_local_values(self) -> None:
+        config_path = self.root / "config.local.json"
+        example_path = self.root / "config.example.json"
+        config_path.write_text(json.dumps({"ai_provider": "openrouter", "openai_api_key": "existing-secret"}), encoding="utf-8")
+        example_path.write_text(json.dumps({"ai_provider": "gemini", "openai_api_key": "", "openai_model": "example-model"}), encoding="utf-8")
+
+        merged = ensure_config_defaults(config_path, example_path)
+
+        self.assertEqual(merged["ai_provider"], "openrouter")
+        self.assertEqual(merged["openai_model"], "example-model")
+        self.assertEqual(json.loads(config_path.read_text(encoding="utf-8"))["openai_api_key"], "existing-secret")
+
+    def test_local_settings_modal_keeps_hidden_api_keys_when_left_blank(self) -> None:
+        config_path = self.root / "config.local.json"
+        config_path.write_text(json.dumps({"openai_api_key": "existing-secret"}), encoding="utf-8")
+
+        save_editable_config({"openai_api_key": [""], "openai_model": ["gpt-test"]}, config_path)
+        page = _render_config_modal(editable_config(config_path))
+
+        saved = json.loads(config_path.read_text(encoding="utf-8"))
+        self.assertEqual(saved["openai_api_key"], "existing-secret")
+        self.assertEqual(saved["openai_model"], "gpt-test")
+        self.assertNotIn("existing-secret", page)
+        self.assertIn("Configured — leave blank to keep it", page)
+
+    def test_local_settings_modal_keeps_api_keys_hidden(self) -> None:
+        page = _render_config_modal({"ai_provider": "gemini", "filing_status": "head_of_household", "state_residence": "CA", "openai_api_key": "existing-secret"})
+
+        self.assertIn('id="open-local-settings"', page)
+        self.assertIn('id="local-settings-dialog"', page)
+        self.assertIn('id="local-settings-form"', page)
+        self.assertIn('fetch("/settings"', page)
+        self.assertIn('<select name="ai_provider">', page)
+        self.assertIn('<select name="filing_status">', page)
+        self.assertIn('<select name="state_residence">', page)
+        self.assertIn('value="gemini" selected', page)
+        self.assertIn('value="head_of_household" selected', page)
+        self.assertIn('value="CA" selected', page)
+        self.assertNotIn("existing-secret", page)
 
     def test_records_layout_setup_endpoint_returns_source_file_instruction(self) -> None:
         created: list[tuple[Path, int]] = []
@@ -369,11 +446,22 @@ class InvestmentGainAppTest(unittest.TestCase):
     def test_tax_inputs_persist_without_replacing_other_local_settings(self) -> None:
         config_path = self.root / "config.local.json"
         config_path.write_text(json.dumps({"openai_api_key": "preserved", "ai_provider": "gemini"}), encoding="utf-8")
-        save_tax_input_defaults({"state": ["ca"], "other_ordinary_taxable_income": ["12,345.67"]}, config_path)
+        save_tax_input_defaults(
+            {
+                "state": ["ca"],
+                "other_ordinary_taxable_income": ["12,345.67"],
+                "filing_status": ["head_of_household"],
+                "num_dependents": ["2"],
+                "ai_provider": ["openrouter"],
+            },
+            config_path,
+        )
         self.assertEqual(tax_input_defaults(config_path), ("CA", "12345.67"))
         saved = json.loads(config_path.read_text(encoding="utf-8"))
         self.assertEqual(saved["openai_api_key"], "preserved")
-        self.assertEqual(saved["ai_provider"], "gemini")
+        self.assertEqual(saved["ai_provider"], "openrouter")
+        self.assertEqual(saved["filing_status"], "head_of_household")
+        self.assertEqual(saved["num_dependents"], 2)
 
     def test_records_root_persists_without_replacing_other_local_settings(self) -> None:
         config_path = self.root / "config.local.json"
@@ -406,15 +494,37 @@ class InvestmentGainAppTest(unittest.TestCase):
     def test_guidance_response_is_saved_beneath_report_folder(self) -> None:
         response = self._valid_guidance_response()
         store = GuidanceResponseStore()
-        paths = store.save(self.root / "reports", 2026, "gemini", [response, response, response], 1)
-        self.assertEqual(paths[1], self.root / "reports" / "ai-rate-guidance" / "2026-gemini-response-2-selected.yaml")
+        profile = GuidanceProfile("CA", "single", 0, "gemini")
+        paths = store.save(self.root / "reports", 2026, profile, [response, response, response], 1)
+        self.assertEqual(paths[1], self.root / "reports" / "ai-rate-guidance" / "2026-gemini-ca-single-0-response-2-selected.yaml")
         self.assertTrue(all(path.is_file() for path in paths))
         self.assertIn("selected: true", paths[1].read_text(encoding="utf-8"))
-        self.assertEqual(len(store.load_all(self.root / "reports", 2026, "gemini")), 3)
-        selected = store.load_selected(self.root / "reports", 2026, "gemini")
+        self.assertIn("state_code: CA", paths[1].read_text(encoding="utf-8"))
+        self.assertEqual(len(store.load_all(self.root / "reports", 2026, profile)), 3)
+        self.assertEqual(store.load_all(self.root / "reports", 2026, GuidanceProfile("NY", "single", 0, "gemini")), ())
+        selected = store.load_selected(self.root / "reports", 2026, profile)
         self.assertIsNotNone(selected)
         self.assertEqual(selected.path, paths[1])
         self.assertEqual(selected.response, validate_guidance_response(response))
+
+    def test_legacy_guidance_is_available_for_the_matching_provider_and_year(self) -> None:
+        response = self._valid_guidance_response()
+        directory = self.root / "reports" / "ai-rate-guidance"
+        directory.mkdir(parents=True)
+        legacy_path = directory / "2026-openrouter-response-1-selected.yaml"
+        legacy_path.write_text(
+            yaml.safe_dump({"provider": "openrouter", "report_year": 2026, "selected": True, "response": response}),
+            encoding="utf-8",
+        )
+        store = GuidanceResponseStore()
+        profile = GuidanceProfile("CA", "head_of_household", 2, "openrouter")
+
+        selected = store.load_selected(self.root / "reports", 2026, profile)
+
+        self.assertIsNotNone(selected)
+        self.assertEqual(selected.path, legacy_path)
+        self.assertEqual(selected.profile, profile)
+        self.assertIsNone(store.load_selected(self.root / "reports", 2026, GuidanceProfile("CA", "single", 0, "gemini")))
 
     def test_guidance_validator_rejects_missing_standard_deduction(self) -> None:
         response = self._valid_guidance_response()
@@ -447,6 +557,10 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('const sync=', page)
         self.assertIn('Get Google Gemini API rate guidance', page)
         self.assertIn('id="guidance-dialog"', page)
+        self.assertIn('id="switch-guidance-button"', page)
+        self.assertIn('No saved ${activeProviderLabel()} responses', page)
+        self.assertIn('Review or switch ${count} saved ${activeProviderLabel()} response', page)
+        self.assertIn('Tax profile changed. Review matching saved guidance', page)
         self.assertIn('new AbortController()', page)
         self.assertIn('5 - saved.responses.length', page)
         self.assertIn('retry.disabled = false', page)
