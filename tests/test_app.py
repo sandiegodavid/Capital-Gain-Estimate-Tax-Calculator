@@ -508,6 +508,21 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertEqual(selected.path, paths[1])
         self.assertEqual(selected.response, validate_guidance_response(response))
 
+    def test_guidance_response_store_preserves_user_edits(self) -> None:
+        response = self._valid_guidance_response()
+        response["breakdowns"][0]["brackets"].insert(1, {"bracket": 75000, "rate": 18})
+        response["breakdowns"][1]["brackets"][1]["rate"] = 20
+        response["standard_deduction"]["amount"] = 18000
+        store = GuidanceResponseStore()
+        profile = GuidanceProfile("CA", "single", 0, "gemini")
+
+        path = store.save(self.root / "reports", 2026, profile, [response], 0)[0]
+
+        saved = yaml.safe_load(path.read_text(encoding="utf-8"))["response"]
+        self.assertEqual(saved["breakdowns"][0]["brackets"][1], {"bracket": 75000.0, "rate": 18.0})
+        self.assertEqual(saved["breakdowns"][1]["brackets"][1]["rate"], 20.0)
+        self.assertEqual(saved["standard_deduction"]["amount"], 18000.0)
+
     def test_legacy_guidance_is_available_for_the_matching_provider_and_year(self) -> None:
         response = self._valid_guidance_response()
         directory = self.root / "reports" / "ai-rate-guidance"
@@ -567,6 +582,9 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('retry.disabled = false', page)
         self.assertIn('await post("/guidance-save"', page)
         self.assertIn('window.location.assign(dashboardUrl())', page)
+        self.assertIn('Add bracket', page)
+        self.assertIn('remove-bracket', page)
+        self.assertIn('deductionAmount.addEventListener', page)
         self.assertIn('Federal ordinary income', page)
         self.assertIn('Federal long-term gains', page)
         self.assertIn('State income tax', page)

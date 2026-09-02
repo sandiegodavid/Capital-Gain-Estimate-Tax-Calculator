@@ -179,6 +179,9 @@ def _render_tax_section(
     return f'''<style>
     .tax-formula-summary {{ display:grid; grid-template-columns:repeat(3,1fr); padding:12px 18px; border-top:1px solid #d9e2ec; background:#fff }}
     .tax-formula-summary .formula-action {{ grid-column:1/-1; justify-self:center }} .tax-formula-summary .formula-action button {{ background:#526d82 }}
+    .guidance-rate-table input,.guidance-response-card .deduction input {{ width:100%; min-width:0; min-height:34px; padding:6px; font-size:12px }}
+    .guidance-breakdown .add-bracket {{ width:100%; min-height:32px; margin-top:6px; padding:5px; background:#526d82; font-size:12px }} .guidance-rate-table .remove-bracket {{ min-height:32px; padding:5px 7px; background:#9b3a32; font-size:11px }}
+    .guidance-response-card .deduction {{ display:grid; gap:6px }}
     .tax-workflow-actions {{ display:grid; grid-template-columns:auto auto minmax(0,1fr); gap:10px; align-items:end; padding:16px 18px; border-top:1px solid #d9e2ec; background:#f8fafc }}
     .tax-workflow-actions .guidance-form {{ grid-column:1/-1; display:flex; align-items:end; gap:10px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none }}
     .tax-workflow-actions .guidance-provider {{ width:min(300px,100%) }} .tax-workflow-actions .guidance-form button {{ white-space:nowrap }}

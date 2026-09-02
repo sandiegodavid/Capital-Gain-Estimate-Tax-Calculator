@@ -17,7 +17,7 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
     return switch_button + profile_note + r'''
 <dialog id="guidance-dialog" class="guidance-dialog">
   <div class="dialog-heading">
-    <div><h2>AI rate guidance review</h2><p>Compare validated responses before choosing one.</p></div>
+    <div><h2>AI rate guidance review</h2><p>Review and edit bracket schedules before choosing one to use.</p></div>
     <button id="close-guidance-dialog" type="button" aria-label="Close">×</button>
   </div>
   <div id="guidance-progress" class="guidance-progress" role="status">Processing requests. Please be patient…</div>
@@ -138,9 +138,7 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
 
   const dashboardUrl = () => `/dashboard?${new URLSearchParams(new FormData(form))}`;
 
-  const money = (value) => new Intl.NumberFormat("en-US", {
-    style: "currency", currency: "USD", maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+  const breakdownFor = (response, type) => (response.breakdowns || []).find((item) => item.type === type);
 
   const renderBreakdown = (response, type, label) => {
     const section = element("section", undefined, "guidance-breakdown");
@@ -148,19 +146,56 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
     const table = element("table", undefined, "guidance-rate-table");
     const head = element("thead");
     const headRow = element("tr");
-    ["Upper bracket", "Rate"].forEach((title) => headRow.append(element("th", title)));
+    ["Upper bracket", "Rate", ""].forEach((title) => headRow.append(element("th", title)));
     head.append(headRow);
     table.append(head);
     const body = element("tbody");
-    const breakdown = (response.breakdowns || []).find((item) => item.type === type);
-    for (const bracket of breakdown ? breakdown.brackets || [] : []) {
+    const breakdown = breakdownFor(response, type);
+    for (const [index, bracket] of (breakdown ? breakdown.brackets || [] : []).entries()) {
       const row = element("tr");
-      row.append(element("td", bracket.bracket === null ? "Top bracket" : money(bracket.bracket)));
-      row.append(element("td", `${bracket.rate}%`));
+      const threshold = document.createElement("input");
+      threshold.type = "number";
+      threshold.min = "0";
+      threshold.step = "1";
+      threshold.placeholder = "Top bracket";
+      threshold.value = bracket.bracket ?? "";
+      threshold.setAttribute("aria-label", `${label} bracket ${index + 1} upper limit`);
+      threshold.addEventListener("input", () => { bracket.bracket = threshold.value === "" ? null : Number(threshold.value); });
+      const rate = document.createElement("input");
+      rate.type = "number";
+      rate.min = "0";
+      rate.max = "100";
+      rate.step = "0.001";
+      rate.value = bracket.rate ?? "";
+      rate.setAttribute("aria-label", `${label} bracket ${index + 1} rate percentage`);
+      rate.addEventListener("input", () => { bracket.rate = rate.value === "" ? "" : Number(rate.value); });
+      const remove = element("button", "Remove", "remove-bracket");
+      remove.type = "button";
+      remove.setAttribute("aria-label", `Remove ${label} bracket ${index + 1}`);
+      remove.addEventListener("click", () => {
+        breakdown.brackets.splice(index, 1);
+        render();
+      });
+      const thresholdCell = element("td");
+      const rateCell = element("td");
+      const actionCell = element("td");
+      thresholdCell.append(threshold);
+      rateCell.append(rate);
+      actionCell.append(remove);
+      row.append(thresholdCell, rateCell, actionCell);
       body.append(row);
     }
     table.append(body);
     section.append(table);
+    const add = element("button", "Add bracket", "add-bracket");
+    add.type = "button";
+    add.addEventListener("click", () => {
+      const brackets = breakdown.brackets;
+      const topBracket = brackets.findIndex((item) => item.bracket === null);
+      brackets.splice(topBracket === -1 ? brackets.length : topBracket, 0, { bracket: 0, rate: 0 });
+      render();
+    });
+    section.append(add);
     return section;
   };
 
@@ -180,11 +215,16 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       card.append(renderBreakdown(response, "federal_long_term", "Federal long-term gains"));
       card.append(renderBreakdown(response, "state", "State income tax"));
       const deduction = response.standard_deduction || {};
-      card.append(element(
-        "p",
-        `Standard deduction: ${money(deduction.amount)} · ${String(deduction.filing_status || "").replaceAll("_", " ")}`,
-        "deduction",
-      ));
+      const deductionLabel = element("label", `Standard deduction · ${String(deduction.filing_status || "").replaceAll("_", " ")}`, "deduction");
+      const deductionAmount = document.createElement("input");
+      deductionAmount.type = "number";
+      deductionAmount.min = "0";
+      deductionAmount.step = "1";
+      deductionAmount.value = deduction.amount ?? "";
+      deductionAmount.setAttribute("aria-label", `Response ${index + 1} standard deduction`);
+      deductionAmount.addEventListener("input", () => { deduction.amount = deductionAmount.value === "" ? "" : Number(deductionAmount.value); });
+      deductionLabel.append(deductionAmount);
+      card.append(deductionLabel);
       const actions = element("div", undefined, "response-actions");
       const use = element("button", "Use", "use-response");
       const retry = element("button", "Discard and retry", "discard-response");
