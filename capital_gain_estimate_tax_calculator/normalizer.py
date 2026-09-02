@@ -4,14 +4,24 @@ from __future__ import annotations
 
 import csv
 import re
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from collections.abc import Iterable
 from pathlib import Path
 
 from .models import Lot, NormalizedReport, ReportError, SourceSummary, ZERO, classify_tax_term, validate_reconciliation
 
 
 OUTPUT_DIRECTORY_NAMES = frozenset({"reports", "archive", "audit", "ai-rate-guidance"})
+CHASE_SCHEMA = "Chase"
+FIDELITY_SCHEMA = "Fidelity"
+SCHWAB_SCHEMA = "Charles Schwab"
+HEADER_SEARCH_ROWS = 5
+CHASE_REQUIRED_HEADERS = frozenset({"Account Name", "Market Cost/Proceeds USD", "Total Realized Gain Loss USD"})
+FIDELITY_REQUIRED_HEADERS = frozenset({"Account", "Symbol(CUSIP)", "Short Term Gain/Loss", "Long Term Gain/Loss"})
+SCHWAB_REQUIRED_HEADERS = frozenset({"Symbol", "Closed Date", "Cost Basis (CB)", "Total Gain/Loss ($)"})
+SCHEMA_BY_FILENAME = (("chase", CHASE_SCHEMA), ("fidelity", FIDELITY_SCHEMA), ("schwab", SCHWAB_SCHEMA))
+SCHEMA_BY_HEADERS = ((CHASE_REQUIRED_HEADERS, CHASE_SCHEMA), (FIDELITY_REQUIRED_HEADERS, FIDELITY_SCHEMA), (SCHWAB_REQUIRED_HEADERS, SCHWAB_SCHEMA))
 
 
 def parse_decimal(value: str | None) -> Decimal:
@@ -37,23 +47,71 @@ def parse_date(value: str | None):
     raise ReportError(f"Cannot parse date value {value!r}.")
 
 
-def detect_schema(path: Path) -> str | None:
-    """Select known brokerage mappers by filename before inspecting headers."""
+def _schema_from_filename(path: Path) -> str | None:
     filename = path.name.casefold()
-    if "chase" in filename:
-        return "Chase"
-    if "fidelity" in filename:
-        return "Fidelity"
+    return next((schema for marker, schema in SCHEMA_BY_FILENAME if marker in filename), None)
+
+
+def _schema_from_headers(header_rows: Iterable[list[str]]) -> str | None:
+    for header_row in header_rows:
+        fields = {value.strip() for value in header_row}
+        for required_headers, schema in SCHEMA_BY_HEADERS:
+            if required_headers <= fields:
+                return schema
+    return None
+
+
+def detect_schema(path: Path) -> str | None:
+    """Identify a supported brokerage export from its filename or CSV headers."""
+    filename_schema = _schema_from_filename(path)
+    if filename_schema:
+        return filename_schema
     try:
         with path.open("r", encoding="utf-8-sig", newline="") as handle:
-            fields = {value.strip() for value in next(csv.reader(handle), [])}
+            reader = csv.reader(handle)
+            header_rows = [next(reader, []) for _ in range(HEADER_SEARCH_ROWS)]
     except (OSError, UnicodeError, csv.Error) as exc:
         raise ReportError(f"Could not read CSV file: {path.name}") from exc
-    if {"Account Name", "Market Cost/Proceeds USD", "Total Realized Gain Loss USD"} <= fields:
-        return "Chase"
-    if {"Account", "Symbol(CUSIP)", "Short Term Gain/Loss", "Long Term Gain/Loss"} <= fields:
-        return "Fidelity"
-    return None
+    return _schema_from_headers(header_rows)
+
+
+def _row_from_values(headers: list[str], values: list[str]) -> dict[str, str]:
+    return dict(zip(headers, (values + [""] * len(headers))[:len(headers)]))
+
+
+def _create_lot(
+    *,
+    source_name: str,
+    source_file: str,
+    source_row: int,
+    account: str,
+    symbol: str,
+    cusip: str,
+    description: str,
+    security_type: str,
+    quantity: Decimal,
+    acquired_date: date,
+    sale_date: date,
+    proceeds: Decimal,
+    basis: Decimal,
+    short_term: Decimal,
+    long_term: Decimal,
+    reported: Decimal,
+    disallowed: Decimal,
+) -> Lot:
+    """Create the common domain model after a brokerage mapper extracts its fields."""
+    return Lot(
+        source_name=source_name, source_file=source_file, source_row=source_row,
+        account=account, symbol=symbol, cusip=cusip, description=description,
+        security_type=security_type, quantity=quantity,
+        acquired_date=acquired_date, sale_date=sale_date,
+        proceeds_usd=proceeds, cost_basis_usd=basis,
+        short_term_gain_loss_usd=short_term, long_term_gain_loss_usd=long_term,
+        total_realized_gain_loss_usd=reported, disallowed_loss_usd=disallowed,
+        economic_gain_loss_usd=proceeds - basis,
+        return_pct=reported / basis if basis else ZERO,
+        tax_term=classify_tax_term(short_term, long_term, disallowed),
+    )
 
 
 def normalize_chase(path: Path, source_file: str) -> list[Lot]:
@@ -68,8 +126,8 @@ def normalize_chase(path: Path, source_file: str) -> list[Lot]:
             long_term = parse_decimal(row.get("Long Term Realized Gain Loss USD"))
             reported = parse_decimal(row.get("Total Realized Gain Loss USD"))
             disallowed = parse_decimal(row.get("Disallowed Loss"))
-            lots.append(Lot(
-                source_name="Chase", source_file=source_file, source_row=row_number,
+            lots.append(_create_lot(
+                source_name=CHASE_SCHEMA, source_file=source_file, source_row=row_number,
                 account=(row.get("Account Number") or "").strip(),
                 symbol=(row.get("Ticker") or row.get("CUSIP") or "N/A").strip(),
                 cusip=(row.get("CUSIP") or "").strip(),
@@ -77,11 +135,8 @@ def normalize_chase(path: Path, source_file: str) -> list[Lot]:
                 security_type=(row.get("Security Type") or "Other").strip().title(),
                 quantity=parse_decimal(row.get("Quantity")),
                 acquired_date=parse_date(row.get("Acquired Date")), sale_date=parse_date(row.get("Sale Date")),
-                proceeds_usd=proceeds, cost_basis_usd=basis,
-                short_term_gain_loss_usd=short_term, long_term_gain_loss_usd=long_term,
-                total_realized_gain_loss_usd=reported, disallowed_loss_usd=disallowed,
-                economic_gain_loss_usd=proceeds - basis, return_pct=reported / basis if basis else ZERO,
-                tax_term=classify_tax_term(short_term, long_term, disallowed),
+                proceeds=proceeds, basis=basis, short_term=short_term, long_term=long_term,
+                reported=reported, disallowed=disallowed,
             ))
     return lots
 
@@ -94,7 +149,7 @@ def split_symbol_cusip(value: str, description: str) -> tuple[str, str]:
     return symbol or "N/A", cusip
 
 
-def fidelity_security_type(symbol: str, description: str) -> str:
+def infer_security_type(symbol: str, description: str) -> str:
     upper = description.upper()
     if upper.startswith("CALL ") or re.search(r"\d{6}C\d", symbol):
         return "Option"
@@ -115,7 +170,7 @@ def normalize_fidelity(path: Path, source_file: str) -> list[Lot]:
         for row_number, values in enumerate(reader, start=2):
             if not values or not any(value.strip() for value in values):
                 continue
-            row = dict(zip(headers, (values + [""] * len(headers))[:len(headers)]))
+            row = _row_from_values(headers, values)
             if not (row.get("Date Sold") or "").strip():
                 continue
             description = (row.get("Security Description") or "").strip()
@@ -125,27 +180,64 @@ def normalize_fidelity(path: Path, source_file: str) -> list[Lot]:
             short_term = parse_decimal(row.get("Short Term Gain/Loss"))
             long_term = parse_decimal(row.get("Long Term Gain/Loss"))
             reported = short_term + long_term
-            lots.append(Lot(
-                source_name="Fidelity", source_file=source_file, source_row=row_number,
+            lots.append(_create_lot(
+                source_name=FIDELITY_SCHEMA, source_file=source_file, source_row=row_number,
                 account=(row.get("Account") or "").strip(), symbol=symbol, cusip=cusip,
-                description=description, security_type=fidelity_security_type(symbol, description),
+                description=description, security_type=infer_security_type(symbol, description),
                 quantity=parse_decimal(row.get("Quantity")),
                 acquired_date=parse_date(row.get("Date Acquired")), sale_date=parse_date(row.get("Date Sold")),
-                proceeds_usd=proceeds, cost_basis_usd=basis,
-                short_term_gain_loss_usd=short_term, long_term_gain_loss_usd=long_term,
-                total_realized_gain_loss_usd=reported, disallowed_loss_usd=ZERO,
-                economic_gain_loss_usd=proceeds - basis, return_pct=reported / basis if basis else ZERO,
-                tax_term=classify_tax_term(short_term, long_term, ZERO),
+                proceeds=proceeds, basis=basis, short_term=short_term, long_term=long_term,
+                reported=reported, disallowed=ZERO,
+            ))
+    return lots
+
+
+def normalize_charles_schwab(path: Path, source_file: str) -> list[Lot]:
+    """Normalize Schwab's realized gain/loss export, which includes a title row before headers."""
+    lots: list[Lot] = []
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        headers: list[str] | None = None
+        header_row_number = 0
+        for row_number, values in enumerate(reader, start=1):
+            candidate = [value.strip() for value in values]
+            if SCHWAB_REQUIRED_HEADERS <= set(candidate):
+                headers = candidate
+                header_row_number = row_number
+                break
+        if headers is None:
+            raise ReportError(f"Could not find the Charles Schwab column headers in {path.name}.")
+        for row_number, values in enumerate(reader, start=header_row_number + 1):
+            row = _row_from_values(headers, values)
+            if not (row.get("Closed Date") or "").strip():
+                continue
+            sale_date = parse_date(row.get("Closed Date"))
+            proceeds = parse_decimal(row.get("Proceeds"))
+            basis = parse_decimal(row.get("Cost Basis (CB)"))
+            short_term = parse_decimal(row.get("Short Term (ST) Gain/Loss ($)"))
+            long_term = parse_decimal(row.get("Long Term (LT) Gain/Loss ($)"))
+            reported = parse_decimal(row.get("Total Gain/Loss ($)"))
+            disallowed = parse_decimal(row.get("Disallowed Loss"))
+            symbol = (row.get("Symbol") or "N/A").strip()
+            description = (row.get("Name") or "").strip()
+            lots.append(_create_lot(
+                source_name=SCHWAB_SCHEMA, source_file=source_file, source_row=row_number,
+                account="", symbol=symbol, cusip="", description=description,
+                security_type=infer_security_type(symbol, description),
+                quantity=parse_decimal(row.get("Quantity")),
+                acquired_date=sale_date, sale_date=sale_date,
+                proceeds=proceeds, basis=basis, short_term=short_term, long_term=long_term,
+                reported=reported, disallowed=disallowed,
             ))
     return lots
 
 
 def source_note(schema: str) -> str:
-    return (
-        "Reported realized G/L may include a separately shown disallowed-loss adjustment."
-        if schema == "Chase"
-        else "Fidelity export is informational; trailing disclaimers are treated as source metadata only."
-    )
+    if schema == CHASE_SCHEMA:
+        return "Reported realized G/L may include a separately shown disallowed-loss adjustment."
+    if schema == SCHWAB_SCHEMA:
+        return "Charles Schwab does not include acquisition dates in this export; the closed date is used as a workbook placeholder."
+    return "Fidelity export is informational; trailing disclaimers are treated as source metadata only."
 
 
 def normalize_sources(input_dir: Path, requested_year: int | None = None) -> NormalizedReport:
@@ -162,7 +254,11 @@ def normalize_sources(input_dir: Path, requested_year: int | None = None) -> Nor
             ignored.append(source_file)
             continue
         schema = detect_schema(path)
-        parser = {"Chase": normalize_chase, "Fidelity": normalize_fidelity}.get(schema)
+        parser = {
+            CHASE_SCHEMA: normalize_chase,
+            FIDELITY_SCHEMA: normalize_fidelity,
+            SCHWAB_SCHEMA: normalize_charles_schwab,
+        }.get(schema)
         if parser is None:
             ignored.append(source_file)
             continue
@@ -170,7 +266,7 @@ def normalize_sources(input_dir: Path, requested_year: int | None = None) -> Nor
         all_lots.extend(lots)
         recognized.append((source_file, schema, lots))
     if not all_lots:
-        raise ReportError("No supported Chase or Fidelity realized gain/loss rows were found.")
+        raise ReportError("No supported Chase, Fidelity, or Charles Schwab realized gain/loss rows were found.")
     years = tuple(sorted({lot.sale_date.year for lot in all_lots}))
     report_year = requested_year if requested_year is not None else years[-1]
     selected = sorted(

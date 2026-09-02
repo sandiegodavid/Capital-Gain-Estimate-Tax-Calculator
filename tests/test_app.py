@@ -34,7 +34,7 @@ from capital_gain_estimate_tax_calculator.guidance_store import GuidanceResponse
 from capital_gain_estimate_tax_calculator.guidance_profile import GuidanceProfile  # noqa: E402
 from capital_gain_estimate_tax_calculator.guidance_review import GuidanceReviewService  # noqa: E402
 from capital_gain_estimate_tax_calculator.tax_guidance import TaxGuidanceService  # noqa: E402
-from capital_gain_estimate_tax_calculator.web import InvestmentGainWebApp, _render_config_modal, _render_dashboard, _render_tax_section  # noqa: E402
+from capital_gain_estimate_tax_calculator.web import InvestmentGainWebApp, _render_config_modal, _render_dashboard, _render_security_group, _render_tax_section  # noqa: E402
 
 
 CHASE_HEADERS = [
@@ -66,6 +66,14 @@ FIDELITY_HEADERS = [
     "Cost Basis",
     "Short Term Gain/Loss",
     "Long Term Gain/Loss",
+]
+
+SCHWAB_HEADERS = [
+    "Symbol", "Name", "Closed Date", "Quantity", "Closing Price", "Cost Basis Method",
+    "Proceeds", "Cost Basis (CB)", "Total Gain/Loss ($)", "Total Gain/Loss (%)",
+    "Long Term (LT) Gain/Loss ($)", "Long Term (LT) Gain/Loss (%)",
+    "Short Term (ST) Gain/Loss ($)", "Short Term (ST) Gain/Loss (%)",
+    "Wash Sale?", "Disallowed Loss",
 ]
 
 
@@ -139,6 +147,35 @@ class InvestmentGainAppTest(unittest.TestCase):
         write_csv(path, CHASE_HEADERS, [])
 
         self.assertEqual(detect_schema(path), "Fidelity")
+
+    def test_schwab_mapper_handles_title_rows_and_wash_sale_adjustments(self) -> None:
+        path = self.source / "Charles_Schwab_realized_gain_loss.csv"
+        with path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["Realized Gain/Loss for account"])
+            writer.writerow(SCHWAB_HEADERS)
+            writer.writerow([
+                "SCHW", "SCHWAB SAMPLE", "01/02/2026", "10", "$100.00", "FIFO",
+                "$1,000.00", "$950.00", "$100.00", "10.5%", "--", "--", "$100.00", "10.5%",
+                "Yes", "$50.00",
+            ])
+
+        report = normalize_sources(self.source, 2026)
+        schwab_lot = next(lot for lot in report.lots if lot.source_name == "Charles Schwab")
+
+        self.assertEqual(detect_schema(path), "Charles Schwab")
+        self.assertEqual(schwab_lot.symbol, "SCHW")
+        self.assertEqual(schwab_lot.acquired_date, schwab_lot.sale_date)
+        self.assertEqual(schwab_lot.total_realized_gain_loss_usd, Decimal("100"))
+        self.assertEqual(schwab_lot.disallowed_loss_usd, Decimal("50"))
+        self.assertIn("Account / brokerage", _render_security_group("SCHW", [schwab_lot]))
+        self.assertIn(">Charles Schwab</td>", _render_security_group("SCHW", [schwab_lot]))
+
+    def test_schwab_headers_are_detected_without_a_brokerage_filename(self) -> None:
+        path = self.source / "broker_export.csv"
+        write_csv(path, SCHWAB_HEADERS, [])
+
+        self.assertEqual(detect_schema(path), "Charles Schwab")
 
     def test_dashboard_load_request_renders_report_data(self) -> None:
         server = ThreadingHTTPServer(("127.0.0.1", 0), InvestmentGainWebApp().handler())
@@ -279,7 +316,7 @@ class InvestmentGainAppTest(unittest.TestCase):
     def test_local_settings_modal_keeps_api_keys_hidden(self) -> None:
         page = _render_config_modal({"ai_provider": "gemini", "filing_status": "head_of_household", "state_residence": "CA", "openai_api_key": "existing-secret"})
 
-        self.assertIn('id="open-local-settings"', page)
+        self.assertNotIn('id="open-local-settings"', page)
         self.assertIn('id="local-settings-dialog"', page)
         self.assertIn('id="local-settings-form"', page)
         self.assertIn('fetch("/settings"', page)

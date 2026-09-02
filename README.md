@@ -65,6 +65,9 @@ The workbook includes **Summary**, **Security Summary**, **Realized Lots**, **Ch
 
 - Chase CSV files with `Account Name`, `Market Cost/Proceeds USD`, and `Total Realized Gain Loss USD`.
 - Fidelity CSV files with `Account`, `Symbol(CUSIP)`, `Short Term Gain/Loss`, and `Long Term Gain/Loss`.
+- Charles Schwab realized gain/loss CSV files, including exports with a report-title row before the headers. Required fields include `Symbol`, `Closed Date`, `Proceeds`, `Cost Basis (CB)`, and `Total Gain/Loss ($)`; the file name may also include `Schwab`.
+
+Charles Schwab's export does not provide acquisition dates. The workbook uses the closed date as an acquisition-date placeholder and calls this out in **Source Notes**. Its reported short-term, long-term, total gain/loss, and disallowed-loss fields are retained for reconciliation.
 
 Exact duplicate-looking rows are kept because they may be separate tax lots. Confirm final figures against brokerage documents.
 
@@ -78,7 +81,7 @@ Choose a state to activate rate guidance, then select one of the supported provi
 - Google Gemini API
 - OpenRouter API
 
-The review window requests up to five responses and stops after three valid ones, or clearly indicates when fewer valid responses are available. It presents separate federal ordinary, federal long-term, and state bracket tables. You can use a response, discard a response and retry, or later review and switch saved responses.
+The review window requests up to five responses and stops after three valid ones, or clearly indicates when fewer valid responses are available. It presents separate federal ordinary, federal long-term, and state bracket tables. You can edit bracket limits, rates, and the standard deduction; add or remove brackets; use a response; discard a response and retry; or later review and switch saved responses. Edited responses are validated before they are saved.
 
 When you select **Use**, all valid reviewed responses are saved as YAML in:
 
