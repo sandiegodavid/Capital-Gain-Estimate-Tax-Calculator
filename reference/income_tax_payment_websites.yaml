@@ -1,0 +1,167 @@
+- jurisdiction: "United States (IRS)"
+  abbreviation: "US"
+  payment_url: "https://www.irs.gov/payments"
+
+- jurisdiction: "Alabama"
+  abbreviation: "AL"
+  payment_url: "https://www.revenue.alabama.gov/make-a-payment/"
+
+- jurisdiction: "Arizona"
+  abbreviation: "AZ"
+  payment_url: "https://www.aztaxes.gov/Home/PaymentIndividual"
+
+- jurisdiction: "Arkansas"
+  abbreviation: "AR"
+  payment_url: "https://www.dfa.arkansas.gov/online-services/taxpayers/"
+
+- jurisdiction: "California"
+  abbreviation: "CA"
+  payment_url: "https://www.ftb.ca.gov/pay/index.html"
+
+- jurisdiction: "Colorado"
+  abbreviation: "CO"
+  payment_url: "https://tax.colorado.gov/pay-individual-income-tax"
+
+- jurisdiction: "Connecticut"
+  abbreviation: "CT"
+  payment_url: "https://portal.ct.gov/DRS/myconneCT/myconneCT"
+
+- jurisdiction: "Delaware"
+  abbreviation: "DE"
+  payment_url: "https://revenue.delaware.gov/payment/"
+
+- jurisdiction: "Georgia"
+  abbreviation: "GA"
+  payment_url: "https://dor.georgia.gov/taxes/how-do-i-make-tax-payment"
+
+- jurisdiction: "Hawaii"
+  abbreviation: "HI"
+  payment_url: "https://tax.hawaii.gov/eservices/"
+
+- jurisdiction: "Idaho"
+  abbreviation: "ID"
+  payment_url: "https://tax.idaho.gov/online-services/e-pay/"
+
+- jurisdiction: "Illinois"
+  abbreviation: "IL"
+  payment_url: "https://tax.illinois.gov/individuals/pay.html"
+
+- jurisdiction: "Indiana"
+  abbreviation: "IN"
+  payment_url: "https://www.in.gov/dor/individual-income-taxes/payments-and-billing/index.html"
+
+- jurisdiction: "Iowa"
+  abbreviation: "IA"
+  payment_url: "https://revenue.iowa.gov/taxes/make-payment"
+
+- jurisdiction: "Kansas"
+  abbreviation: "KS"
+  payment_url: "https://www.ksrevenue.gov/taxpayment.html"
+
+- jurisdiction: "Kentucky"
+  abbreviation: "KY"
+  payment_url: "https://revenue.ky.gov/Collections/Pages/E-file-Payment-Options.aspx"
+
+- jurisdiction: "Louisiana"
+  abbreviation: "LA"
+  payment_url: "https://revenue.louisiana.gov/file-pay-online/"
+
+- jurisdiction: "Maine"
+  abbreviation: "ME"
+  payment_url: "https://www1.maine.gov/revenue/portal"
+
+- jurisdiction: "Maryland"
+  abbreviation: "MD"
+  payment_url: "https://mdtaxconnect.gov/rptp/portal"
+
+- jurisdiction: "Massachusetts"
+  abbreviation: "MA"
+  payment_url: "https://www.mass.gov/info-details/e-file-and-pay-your-ma-personal-income-taxes"
+
+- jurisdiction: "Michigan"
+  abbreviation: "MI"
+  payment_url: "https://www.michigan.gov/taxes/iit/iitpayments"
+
+- jurisdiction: "Minnesota"
+  abbreviation: "MN"
+  payment_url: "https://www.revenue.state.mn.us/make-payment"
+
+- jurisdiction: "Mississippi"
+  abbreviation: "MS"
+  payment_url: "https://www.dor.ms.gov/forms-resources/make-online-tax-payments"
+
+- jurisdiction: "Missouri"
+  abbreviation: "MO"
+  payment_url: "https://dor.mo.gov/taxation/individual/pay-online.html"
+
+- jurisdiction: "Montana"
+  abbreviation: "MT"
+  payment_url: "https://tap.dor.mt.gov/"
+
+- jurisdiction: "Nebraska"
+  abbreviation: "NE"
+  payment_url: "https://revenue.nebraska.gov/individuals/electronic-payment-options-individual-income-tax"
+
+- jurisdiction: "New Jersey"
+  abbreviation: "NJ"
+  payment_url: "https://www.nj.gov/treasury/taxation/onlinepayment.shtml"
+
+- jurisdiction: "New Mexico"
+  abbreviation: "NM"
+  payment_url: "https://tap.state.nm.us/"
+
+- jurisdiction: "New York"
+  abbreviation: "NY"
+  payment_url: "https://www.tax.ny.gov/pay/ind/pay-income-tax-online.htm"
+
+- jurisdiction: "North Carolina"
+  abbreviation: "NC"
+  payment_url: "https://www.ncdor.gov/file-pay/file-pay-individuals"
+
+- jurisdiction: "North Dakota"
+  abbreviation: "ND"
+  payment_url: "https://tap.tax.nd.gov/"
+
+- jurisdiction: "Ohio"
+  abbreviation: "OH"
+  payment_url: "https://tax.ohio.gov/individual/pay-online/payonline"
+
+- jurisdiction: "Oklahoma"
+  abbreviation: "OK"
+  payment_url: "https://oklahoma.gov/tax/individuals/pay-taxes.html"
+
+- jurisdiction: "Oregon"
+  abbreviation: "OR"
+  payment_url: "https://www.oregon.gov/dor/programs/individuals/Pages/Personal-income-tax-payments.aspx"
+
+- jurisdiction: "Pennsylvania"
+  abbreviation: "PA"
+  payment_url: "https://www.pa.gov/services/revenue/make-a-personal-income-tax-payment"
+
+- jurisdiction: "Rhode Island"
+  abbreviation: "RI"
+  payment_url: "https://tax.ri.gov/online-services/make-payment-online"
+
+- jurisdiction: "South Carolina"
+  abbreviation: "SC"
+  payment_url: "https://dor.sc.gov/iit/iit-file-pay-options"
+
+- jurisdiction: "Utah"
+  abbreviation: "UT"
+  payment_url: "https://tax.utah.gov/online-services/payments/"
+
+- jurisdiction: "Vermont"
+  abbreviation: "VT"
+  payment_url: "https://tax.vermont.gov/individuals/pay"
+
+- jurisdiction: "Virginia"
+  abbreviation: "VA"
+  payment_url: "https://www.tax.virginia.gov/payments"
+
+- jurisdiction: "West Virginia"
+  abbreviation: "WV"
+  payment_url: "https://tax.wv.gov/Individuals/ElectronicFiling/PaymentOptions/Pages/IndividualsPaymentOptions.aspx"
+
+- jurisdiction: "Wisconsin"
+  abbreviation: "WI"
+  payment_url: "https://www.revenue.wi.gov/Pages/OnlineServices/Pay.aspx"

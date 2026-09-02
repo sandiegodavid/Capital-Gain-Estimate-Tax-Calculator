@@ -1,0 +1,14 @@
+{
+  "realized_gains_root": "/path/to/Financial Records/Investments/Realized Gains",
+  "ai_provider": "gemini",
+  "openai_api_key": "",
+  "openai_model": "gpt-5.6",
+  "gemini_api_key": "",
+  "gemini_model": "gemini-3.7-flash",
+  "openrouter_api_key": "",
+  "openrouter_model": "openai/gpt-4o",
+  "filing_status": "single",
+  "num_dependents": 0,
+  "state_residence": "CA",
+  "other_ordinary_taxable_income": "0"
+}
