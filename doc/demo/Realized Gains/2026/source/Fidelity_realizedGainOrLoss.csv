@@ -1,0 +1,57 @@
+﻿Account,Symbol(CUSIP),Security Description,Quantity,Date Acquired,Date Sold,Proceeds,Cost Basis,Short Term Gain/Loss,Long Term Gain/Loss
+"	c6acba650155",PQR(4792a9c1),PQR CORP,450,5/6/26,6/11/26,"$42,495.77 ","$17,905.34 ","$24,590.43 ", --
+"	c6acba650155",OUX(094792a9),OUX INC,100,1/28/26,2/2/26,"$13,721.40 ","$7,496.55 ","$6,224.85 ", --
+"	c6acba650155",AGM(106de0947),AGM TECHNOLOGY INC COM,30,3/4/26,3/13/26,"$16,006.03 ","$8,302.76 ","$7,703.27 ", --
+"	c6acba650155",DLRX(106de0947),DLRX CORP,200,6/16/26,6/22/26,"$35,125.55 ","$17,273.79 ","$17,851.76 ", --
+"	c6acba650155",DLRX(106de0947),DLRX CORP,100,4/16/26,5/28/26,"$15,197.81 ","$4,700.69 ","$10,497.12 ", --
+"	c6acba650155",DLRX(106de0947),DLRX CORP,100,4/16/26,5/28/26,"$15,197.81 ","$4,700.69 ","$10,497.12 ", --
+"	c6acba650155",JPV(4792a9c1bc),JPV CORP,50,4/9/26,6/4/26,"$36,468.68 ","$11,674.48 ","$24,794.20 ", --
+"	c6acba650155",EMS(060947929),EMS ETF,35.609,11/22/25,4/30/26,"$32,389.96 ","$17,233.81 ","$15,156.15 ", --
+"	c6acba650155",EMS(060947929),EMS ETF,3,11/22/25,4/30/26,$355.65 ,$189.23 ,$166.42 , --
+"	c6acba650155",EMS(060947929),EMS ETF,3,11/22/25,4/30/26,$355.67 ,$189.23 ,$166.44 , --
+"	c6acba650155",FMS(7929143749),FMS ETF,92.217,12/4/25,5/1/26,"$18,351.21 ","$9,493.90 ","$8,857.31 ", --
+"	c6acba650155",FMS(7929143749),FMS ETF,7,12/4/25,5/1/26,$155.81 ,$80.61 ,$75.20 , --
+"	c6acba650155",FMS(7929143749),FMS ETF,3,12/4/25,5/1/26,$155.81 ,$80.61 ,$75.20 , --
+"	c6acba650155",QPON(09479291437),QPON CLASS A,100,1/29/26,4/6/26,"$16,011.74 ","$8,434.48 ","$7,577.26 ", --
+"	c6acba650155",IQPNS(8d9695644),IQPNS COM,300,1/14/26,5/7/26,"$26,946.91 ","$10,159.08 ","$16,787.83 ", --
+"	c6acba650155",HOV(449482988),HOV ETF,115,3/11/26,5/5/26,"$29,859.66 ","$15,747.07 ","$14,112.59 ", --
+"	c6acba650155",HOV(449482988),HOV ETF,50,3/11/26,4/16/26,"$12,756.33 ","$6,846.55 ","$5,909.78 ", --
+"	c6acba650155",HOV(449482988),HOV ETF,50,3/11/26,4/16/26,"$12,746.53 ","$6,846.55 ","$5,899.98 ", --
+"	c6acba650155",OPQR(6e8449844),OPQR INC COM,30,6/9/26,6/12/26,"$15,029.72 ","$8,167.24 ","$6,862.48 ", --
+"	c6acba650155",OPQR(6e8449844),OPQR INC COM,50,2/3/26,2/10/26,"$26,710.74 ","$14,486.21 ","$12,224.53 ", --
+"	c6acba650155",OPQR(6e8449844),OPQR INC COM,50,10/14/24,1/2/26,"$28,576.80 ","$7,568.48 ", --,"$21,008.32 "
+"	c6acba650155",OPQR(6e8449844),OPQR INC COM,34,12/9/24,1/2/26,"$19,432.22 ","$8,946.41 ", --,"$10,485.81 "
+"	c6acba650155",(CUREUR026),EURO (EUR),77.31,2/24/26,5/7/26,$113.49 ,$62.77 ,$50.72 , --
+"	c6acba650155",(CUREUR026),EURO (EUR),"18,159.50",5/7/26,5/7/26,"$26,657.47 ","$14,749.27 ","$11,908.20 ", --
+"	c6acba650155",(CUREUR026),EURO (EUR),"12,517.00",1/14/26,1/14/26,"$18,560.63 ","$10,159.08 ","$8,401.55 ", --
+"	c6acba650155",UVW(013095491482),UVW INC CLASS A COMMON STOCK,30,3/13/26,4/9/26,"$23,914.80 ","$12,744.83 ","$11,169.97 ", --
+"	c6acba650155",UVW(013095491482),UVW INC CLASS A COMMON STOCK,50,11/5/25,2/26/26,"$41,354.15 ","$21,718.28 ","$19,635.87 ", --
+"	c6acba650155",DJPE(262735d96535),DJPE INC CL A,110,2/23/26,4/6/26,"$54,809.62 ","$27,014.48 ","$27,795.14 ", --
+"	c6acba650155",DJPE(262735d96535),DJPE INC CL A,100,2/20/26,4/6/26,"$49,907.57 ","$27,593.10 ","$22,314.47 ", --
+"	c6acba650155",IJKL(697a464),IJKL TECHNOLOGIES INC CL A,200,5/11/26,8/18/26,"$43,739.99 ","$18,791.72 ","$24,948.27 ", --
+"	c6acba650155",GEF(9c9d64c),GEF LIMITED,723,5/22/26,6/15/26,"$56,707.33 ","$28,546.03 ","$28,161.30 ", --
+"	c6acba650155",GEF(9c9d64c),GEF LIMITED,22,5/22/26,6/15/26,"$1,725.53 ",$868.32 ,$857.21 , --
+"	c6acba650155",LRX(35d96535474),LRX COM INC,70,5/1/26,6/12/26,"$33,764.46 ","$10,100.03 ","$23,664.43 ", --
+"	c6acba650155",GHI(8444369),GHI TECHNOLOGY INC COM,100,7/2/26,7/6/26,"$32,541.71 ","$16,744.14 ","$15,797.57 ", --
+"	c6acba650155",GHI(8444369),GHI TECHNOLOGY INC COM,200,6/16/26,6/30/26,"$74,787.01 ","$39,471.72 ","$35,315.29 ", --
+"	c6acba650155",BJQ(541639507),BJQ LLC,200,4/10/26,5/14/26,"$56,950.82 ","$15,448.28 ","$41,502.54 ", --
+"	c6acba650155",TSQR(25063F107),TSQR INC,600,5/5/26,5/6/26,"$30,761.00 ","$15,744.83 ","$15,016.17 ", --
+"	c6acba650155",WHGP(18659f04de69f82a74),CALL (WHGP) MAR 20 26 $500 (100 SHS),6,12/17/25,2/24/26,"$7,063.51 ","$2,795.85 ","$4,267.66 ", --
+"	c6acba650155",TGWL(7974ff64-206d-4c41),CALL (TGWL) FEB 06 26 $155 (100 SHS),10,1/30/26,2/6/26,$0.00 ,"$3,590.86 ","($3,590.86)", --
+"	c6acba650155",JSET(87a88be3553b),CALL (JSET) JSET CORPORATION APR 17 26 $400 (100 SHS),5,12/17/25,2/24/26,"$6,642.25 ","$2,536.77 ","$4,105.48 ", --
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+The data and information in this spreadsheet is provided to you solely for your use and is not for distribution. The spreadsheet is provided for,,,,,,,,,
+"informational purposes only, and is not intended to provide advice, nor should it be construed as an offer to sell, a solicitation of an offer to buy",,,,,,,,,
+or a recommendation for any security by Fidelity or any third party. Data and information shown is based on information known to Fidelity as of the date it was,,,,,,,,,
+exported and is subject to change. It should not be used in place of your account statements or trade confirmations and is not intended for tax reporting purposes.,,,,,,,,,
+"For more information on the data included in this spreadsheet, including any limitations thereof, go to Fidelity.com.",,,,,,,,,
+,,,,,,,,,
+"Brokerage services are provided by Fidelity Brokerage Services LLC (FBS), 900 Salem Street, Smithfield, RI 02917. Custody and other services provided by",,,,,,,,,
+"National Financial Services LLC (NFS). Both are Fidelity Investment companies and members SIPC, NYSE. Neither FBS nor NFS offer crypto as a",,,,,,,,,
+direct investment nor provide trading or custody services for such assets.,,,,,,,,,
+,,,,,,,,,
+Date downloaded Aug-23-2026 11:28 a.m. ET,,,,,,,,,

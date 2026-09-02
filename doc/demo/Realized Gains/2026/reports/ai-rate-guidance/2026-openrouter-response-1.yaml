@@ -1,0 +1,72 @@
+saved_at: '2026-09-01T19:17:17-07:00'
+provider: openrouter
+report_year: 2026
+selected: false
+response:
+  breakdowns:
+  - type: federal_ordinary
+    brackets:
+    - bracket: 11925.0
+      rate: 10.0
+    - bracket: 48475.0
+      rate: 12.0
+    - bracket: 103350.0
+      rate: 22.0
+    - bracket: 197300.0
+      rate: 24.0
+    - bracket: 250525.0
+      rate: 32.0
+    - bracket: 626350.0
+      rate: 35.0
+    - bracket: null
+      rate: 37.0
+  - type: federal_long_term
+    brackets:
+    - bracket: 96700.0
+      rate: 0.0
+    - bracket: 600050.0
+      rate: 15.0
+    - bracket: null
+      rate: 20.0
+  - type: state
+    brackets:
+    - bracket: 21099.0
+      rate: 1.1
+    - bracket: 47884.0
+      rate: 2.2
+    - bracket: 69784.0
+      rate: 4.4
+    - bracket: 88929.0
+      rate: 6.6
+    - bracket: 113997.0
+      rate: 8.8
+    - bracket: 574038.0
+      rate: 10.23
+    - bracket: 813470.0
+      rate: 11.33
+    - bracket: 1000000.0
+      rate: 12.43
+    - bracket: 1345825.0
+      rate: 13.53
+    - bracket: 2000000.0
+      rate: 14.43
+    - bracket: null
+      rate: 15.43
+  standard_deduction:
+    filing_status: head_of_household
+    amount: 23850.0
+  sources:
+  - title: IRS - Publication 550 (Investment Income and Expenses) - Capital Gains
+      and Losses
+    url: https://www.irs.gov/publications/p550
+  - title: IRS - Topic No. 409, Capital Gains and Losses
+    url: https://www.irs.gov/taxtopics/tc409
+  - title: IRS - 2026 Inflation-Adjusted Tax Brackets (Planning Estimates)
+    url: https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026
+  - title: IRS - 2026 Standard Deduction (Planning Estimates, Head of Household)
+    url: https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026
+  - title: California Franchise Tax Board - Personal Income Tax Booklet (Rates and
+      Brackets)
+    url: https://www.ftb.ca.gov/forms/2025/2025-540-booklet.html
+  - title: California Franchise Tax Bank - Tax Rate Schedules
+    url: https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.html
