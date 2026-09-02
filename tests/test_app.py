@@ -583,7 +583,8 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('See exact formula', guided_page)
         self.assertIn('Exact tax formula', guided_page)
         self.assertIn('class="tax-workflow-actions"', guided_page)
-        self.assertIn('.tax-workflow-actions .formula-action', guided_page)
+        self.assertIn('class="tax-formula-summary"', guided_page)
+        self.assertIn('.tax-formula-summary .formula-action', guided_page)
         self.assertIn('highest rate down', guided_page)
 
     def test_end_to_end_workbook_structure_and_numeric_types(self) -> None:
