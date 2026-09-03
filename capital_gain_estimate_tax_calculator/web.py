@@ -187,7 +187,7 @@ def _render_tax_section(
     settings_modal = _render_config_modal(editable_config())
     return f'''<style>
     .tax-formula-summary {{ display:grid; grid-template-columns:repeat(3,1fr); padding:12px 18px; border-top:1px solid #d9e2ec; background:#fff }}
-    .tax-formula-summary .formula-action {{ grid-column:1/-1; justify-self:center }} .tax-formula-summary .formula-action button {{ background:#526d82 }}
+    .tax-formula-summary .formula-action {{ grid-column:1/-1; justify-self:center }} .tax-formula-summary .formula-action button {{ min-height:34px; padding:6px 12px; border:1px solid #9ed5bc; background:#e8f5ef; color:#087f5b; font-size:13px; font-weight:700 }}
     .guidance-rate-table input,.guidance-response-card .deduction input {{ width:100%; min-width:0; min-height:34px; padding:6px; font-size:12px }}
     .guidance-breakdown .add-bracket {{ width:100%; min-height:32px; margin-top:6px; padding:5px; background:#526d82; font-size:12px }} .guidance-rate-table .remove-bracket {{ min-height:32px; padding:5px 7px; background:#9b3a32; font-size:11px }}
     .guidance-response-card .deduction {{ display:grid; gap:6px }}
