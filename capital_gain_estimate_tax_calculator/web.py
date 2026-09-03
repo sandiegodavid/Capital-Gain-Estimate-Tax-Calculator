@@ -55,6 +55,12 @@ LOCAL_SETTINGS_LABELS = {
     "other_ordinary_taxable_income": "Default other ordinary taxable income ($)",
 }
 
+AI_PROVIDER_CONFIG_KEYS = {
+    "openai": ("openai_api_key", "openai_model"),
+    "gemini": ("gemini_api_key", "gemini_model"),
+    "openrouter": ("openrouter_api_key", "openrouter_model"),
+}
+
 
 def _render_config_control(key: str, label: str, stored: object) -> str:
     """Render one key-safe local setting control with supported-choice dropdowns."""
@@ -77,19 +83,28 @@ def _render_config_control(key: str, label: str, stored: object) -> str:
 
 
 def _render_config_modal(values: dict[str, object]) -> str:
-    """Render the dashboard's local-only configuration dialog."""
-    controls = [_render_config_control(key, label, values.get(key, "")) for key, label in LOCAL_SETTINGS_LABELS.items()]
+    """Render provider-specific local configuration controlled by the Rate bracket selection."""
+    controls = "".join(
+        f'<div class="provider-config" data-provider="{provider_id}">'
+        + "".join(_render_config_control(key, LOCAL_SETTINGS_LABELS[key], values.get(key, "")) for key in keys)
+        + "</div>"
+        for provider_id, keys in AI_PROVIDER_CONFIG_KEYS.items()
+    )
     return f'''<style>
-  .local-settings-dialog {{ width:min(760px,94vw); max-height:90vh; padding:0; border:0; border-radius:14px; color:#102a43; box-shadow:0 24px 70px #102a4355 }} .local-settings-dialog::backdrop {{ background:#102a4388 }} .local-settings-note {{ margin:18px 22px 0; color:#627d98 }} .local-settings-form {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:18px 22px 22px; padding:0; border:0; box-shadow:none }} .local-settings-form label {{ display:grid; gap:5px; color:#627d98; font-size:12px; font-weight:700 }} .local-settings-form input,.local-settings-form select {{ min-height:38px; padding:8px; border:1px solid #b9c8d6; border-radius:7px; font:inherit }} .local-settings-form small {{ font-weight:400 }} .local-settings-actions {{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:12px }} .local-settings-actions p {{ margin:0; color:#627d98 }} @media(max-width:640px) {{ .local-settings-form {{ grid-template-columns:1fr }} }}
+  .local-settings-dialog {{ width:min(760px,94vw); max-height:90vh; padding:0; border:0; border-radius:14px; color:#102a43; box-shadow:0 24px 70px #102a4355 }} .local-settings-dialog::backdrop {{ background:#102a4388 }} .local-settings-note {{ margin:18px 22px 0; color:#627d98 }} .local-settings-form {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:18px 22px 22px; padding:0; border:0; box-shadow:none }} .provider-config {{ grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px }} .provider-config[hidden] {{ display:none }} .local-settings-form label {{ display:grid; gap:5px; color:#627d98; font-size:12px; font-weight:700 }} .local-settings-form input,.local-settings-form select {{ min-height:38px; padding:8px; border:1px solid #b9c8d6; border-radius:7px; font:inherit }} .local-settings-form small {{ font-weight:400 }} .local-settings-actions {{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:12px }} .local-settings-actions p {{ margin:0; color:#627d98 }} @media(max-width:640px) {{ .local-settings-form,.provider-config {{ grid-template-columns:1fr }} }}
 </style><dialog id="local-settings-dialog" class="local-settings-dialog">
-  <div class="dialog-heading"><div><h2>Local settings</h2><p>Saved only in config.local.json on this Mac.</p></div><button id="close-local-settings" type="button" aria-label="Close">×</button></div>
-  <p class="local-settings-note">Missing settings are filled from config.example.json. API keys remain hidden; leave a key blank to keep it.</p>
-  <form id="local-settings-form" class="local-settings-form">{''.join(controls)}<div class="local-settings-actions"><p id="local-settings-status" role="status"></p><button type="submit">Save local settings</button></div></form>
+  <div class="dialog-heading"><div><h2 id="provider-settings-title">AI provider settings</h2><p>Saved only in config.local.json on this Mac.</p></div><button id="close-local-settings" type="button" aria-label="Close">×</button></div>
+  <p class="local-settings-note">Configure the provider selected in Rate bracket. API keys remain hidden; leave a key blank to keep it.</p>
+  <form id="local-settings-form" class="local-settings-form">{controls}<div class="local-settings-actions"><p id="local-settings-status" role="status"></p><button type="submit">Save AI provider settings</button></div></form>
 </dialog>
 <script>(() => {{
-  const button = document.getElementById("open-local-settings"), dialog = document.getElementById("local-settings-dialog"), closeButton = document.getElementById("close-local-settings"), form = document.getElementById("local-settings-form"), status = document.getElementById("local-settings-status");
+  const button = document.getElementById("open-local-settings"), dialog = document.getElementById("local-settings-dialog"), closeButton = document.getElementById("close-local-settings"), form = document.getElementById("local-settings-form"), status = document.getElementById("local-settings-status"), provider = document.getElementById("ai-provider"), title = document.getElementById("provider-settings-title"), providerSections = [...document.querySelectorAll(".provider-config")];
   if (!button || !dialog || !closeButton || !form || !status) return;
-  button.addEventListener("click", () => {{ status.textContent = ""; dialog.showModal(); }});
+  const providerNames = {{ openai: "ChatGPT / OpenAI API", gemini: "Google Gemini API", openrouter: "OpenRouter API" }};
+  const syncProviderSettings = () => {{ const selected = provider?.value || ""; providerSections.forEach((section) => {{ const visible = section.dataset.provider === selected; section.hidden = !visible; section.querySelectorAll("input,select").forEach((control) => {{ control.disabled = !visible; }}); }}); if (title) title.textContent = `${{providerNames[selected] || "AI provider"}} settings`; }};
+  button.addEventListener("click", () => {{ status.textContent = ""; syncProviderSettings(); dialog.showModal(); }});
+  provider?.addEventListener("change", syncProviderSettings);
+  syncProviderSettings();
   closeButton.addEventListener("click", () => dialog.close());
   form.addEventListener("submit", async (event) => {{
     event.preventDefault(); status.textContent = "Saving local settings…";
@@ -97,7 +112,7 @@ def _render_config_modal(values: dict[str, object]) -> str:
       const response = await fetch("/settings", {{ method: "POST", headers: {{ Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" }}, body: new URLSearchParams(new FormData(form)) }});
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Could not save local settings.");
-      status.textContent = payload.message || "Local settings saved.";
+      status.textContent = payload.message || "AI provider settings saved.";
       form.querySelectorAll('input[type="password"]').forEach((input) => {{ input.value = ""; }});
     }} catch (error) {{ status.textContent = error.message; }}
   }});
@@ -208,30 +223,30 @@ def _render_tax_section(
         estimate,
         formula,
     )
-    formula_button = _render_formula_button(formula)
-    formula_summary = f'<div class="tax-formula-summary">{formula_button}</div>' if formula_button else ""
-    guidance_modal = render_guidance_modal(guidance_path is not None)
-    settings_modal = _render_config_modal(editable_config())
     source_selection_inputs = _source_selection_inputs(selection)
+    formula_button = _render_formula_button(formula)
+    formula_summary = f'''<div class="tax-formula-summary"><div class="tax-actions">{federal_payment_button}{state_payment}</div>{formula_button}<button id="switch-guidance-button" class="rate-bracket-action" type="button">Show rate brackets</button></div>'''
+    guidance_form = f'''<form id="guidance-form" class="guidance-form rate-bracket-controls"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<input id="guidance-state" type="hidden" name="state" value="{assumptions.state_code}"><input id="guidance-filing-status" type="hidden" name="filing_status" value="{_escape(assumptions.filing_status)}"><input id="guidance-dependent-count" type="hidden" name="num_dependents" value="{assumptions.num_dependents}"><input id="guidance-ordinary-income" type="hidden" name="other_ordinary_taxable_income" value="{assumptions.other_ordinary_taxable_income:g}"><label class="guidance-provider">AI provider<select id="ai-provider" name="ai_provider">{_provider_options(assumptions)}</select></label><button id="guidance-button" type="button" {'disabled' if not assumptions.state_code else ''}>Get {provider_label(assumptions.ai_provider)} rate guidance</button><button id="open-local-settings" class="secondary-action" type="button">Change AI provider setting</button></form>{saved_note}'''
+    guidance_modal = render_guidance_modal(guidance_path is not None, guidance_form)
+    settings_modal = _render_config_modal(editable_config())
     return f'''<style>
-    .tax-formula-summary {{ display:grid; grid-template-columns:repeat(3,1fr); padding:12px 18px; border-top:1px solid #d9e2ec; background:#fff }}
-    .tax-formula-summary .formula-action {{ grid-column:1/-1; justify-self:center }} .tax-formula-summary .formula-action button {{ min-height:34px; padding:6px 12px; border:1px solid #9ed5bc; background:#e8f5ef; color:#087f5b; font-size:13px; font-weight:700 }}
+    .tax-formula-summary {{ display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 18px; border-top:1px solid #d9e2ec; background:#fff }}
+    .tax-formula-summary .formula-action {{ display:contents }} .tax-formula-summary .formula-action button,.rate-bracket-action {{ min-height:34px; margin:0; padding:6px 12px; border:1px solid #9ed5bc; border-radius:7px; background:#e8f5ef; color:#087f5b; font-size:13px; font-weight:700; white-space:nowrap }} .rate-bracket-action {{ border-color:#b6c8d8; background:#f1f6fa; color:#315d7d }} .tax-formula-summary .tax-actions {{ display:flex; gap:10px; padding:0 }} .tax-formula-summary .pay-button {{ min-height:38px; margin:0; padding:8px 15px; border:0; border-radius:7px; background:#087f5b; color:white; font-size:14px; font-weight:700; white-space:nowrap }} .tax-formula-summary .pay-button.secondary {{ background:#1f5f8b }}
     .guidance-rate-table input,.guidance-response-card .deduction input {{ width:100%; min-width:0; min-height:34px; padding:6px; font-size:12px }}
     .guidance-breakdown .add-bracket {{ width:100%; min-height:32px; margin-top:6px; padding:5px; background:#526d82; font-size:12px }} .guidance-rate-table .remove-bracket {{ min-height:32px; padding:5px 7px; background:#9b3a32; font-size:11px }}
     .guidance-response-card .deduction {{ display:grid; gap:6px }}
-    .tax-workflow-actions {{ display:grid; grid-template-columns:minmax(220px,260px) auto auto; gap:10px; align-items:end; justify-content:start; padding:16px 18px; border-top:1px solid #d9e2ec; background:#f8fafc }}
-    .tax-workflow-actions .guidance-form {{ display:contents }}
-    .tax-workflow-actions .guidance-provider {{ min-width:0 }} .tax-workflow-actions .guidance-provider select {{ width:100% }}
-    .tax-workflow-actions .guidance-form button,.tax-workflow-actions #switch-guidance-button {{ min-height:34px; margin:0; padding:6px 10px; font-size:14px; white-space:nowrap }}
-    .tax-workflow-actions #guidance-profile-note {{ grid-column:1/-1; margin:0 }}
-    @media(max-width:1100px) {{ .tax-workflow-actions {{ grid-template-columns:minmax(220px,1fr) auto }} .tax-workflow-actions #switch-guidance-button {{ grid-column:1/-1; justify-self:start }} }}
-    @media(max-width:800px) {{ .tax-formula-summary {{ grid-template-columns:1fr }} .tax-formula-summary .formula-action {{ grid-column:1 }} .tax-formula-summary .formula-action button {{ width:100% }} .tax-workflow-actions {{ grid-template-columns:1fr }} .tax-workflow-actions #switch-guidance-button {{ grid-column:1; width:100% }} .tax-workflow-actions .guidance-form button {{ width:100% }} }}
+    .rate-bracket-controls {{ grid-template-columns:235px auto auto; justify-content:start }}
+    .response-metadata {{ margin:12px 0 0; color:#627d98; font-size:12px }}
+    .guidance-tax-context {{ margin:0 22px 14px; color:#315d7d; font-size:13px; font-weight:700 }}
+    .tax-form {{ grid-template-columns:repeat(4,minmax(145px,1fr)) 145px }}
+    .tax-form-action {{ min-height:38px }}
+    @media(max-width:800px) {{ .tax-formula-summary {{ align-items:stretch }} .tax-formula-summary .formula-action button,.rate-bracket-action {{ width:100% }} .rate-bracket-controls {{ grid-template-columns:1fr }} .rate-bracket-controls button {{ width:100% }} }}
     </style><section class="panel tax-panel">
     <div class="panel-heading"><h2>Estimated Tax</h2><span>Planning estimate — not tax advice · No liability assumed</span></div>
-    <form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><button id="open-local-settings" class="secondary-action tax-form-action" type="button">Change settings</button><button class="tax-form-action" type="submit">Update estimate</button></form>
+    <form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><button class="tax-form-action" type="submit">Update estimate</button></form>
     {rate_cards}<div class="tax-results"><article><p>Federal estimate</p><strong>{_currency(estimate.federal)}</strong></article><article><p>State estimate{f" · {assumptions.state_code}" if assumptions.state_code else ""}</p><strong>{_currency(estimate.state)}</strong></article><article><p>Estimated total tax</p><strong>{_currency(estimate.total)}</strong></article></div>{formula_summary}{state_requirement}
-    <div class="tax-workflow-actions"><form id="guidance-form" class="guidance-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<input id="guidance-state" type="hidden" name="state" value="{assumptions.state_code}"><input id="guidance-filing-status" type="hidden" name="filing_status" value="{_escape(assumptions.filing_status)}"><input id="guidance-dependent-count" type="hidden" name="num_dependents" value="{assumptions.num_dependents}"><input id="guidance-ordinary-income" type="hidden" name="other_ordinary_taxable_income" value="{assumptions.other_ordinary_taxable_income:g}"><label class="guidance-provider">AI provider<select id="ai-provider" name="ai_provider">{_provider_options(assumptions)}</select></label><button id="guidance-button" type="button" {'disabled' if not assumptions.state_code else ''}>Get {provider_label(assumptions.ai_provider)} rate guidance</button></form>{guidance_modal}{settings_modal}</div>
-    {saved_note}<div class="tax-actions">{federal_payment_button}{state_payment}</div><p class="tax-note">Tax is calculated incrementally from the approved response's bracket schedules. Federal short-term gains are treated as ordinary income. This planning estimate excludes deductions, credits, surtaxes, carryovers, and other tax-specific adjustments.</p></section>'''
+    {guidance_modal}{settings_modal}
+    <p class="tax-note">Tax is calculated incrementally from the approved response's bracket schedules. Federal short-term gains are treated as ordinary income. This planning estimate excludes deductions, credits, surtaxes, carryovers, and other tax-specific adjustments.</p></section>'''
 
 
 def _render_rate_cards(
@@ -407,7 +422,7 @@ def _render_dashboard(
     source_selection_inputs = _source_selection_inputs(selection) if selection else ""
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Capital Gain Estimate Tax Calculator</title><style>
     :root {{ color-scheme: light; --ink:#102a43; --muted:#627d98; --paper:#f4f7fa; --line:#d9e2ec; --navy:#15324b; --blue:#1f5f8b; --gain:#087f5b; --loss:#b42318; }}
-    .tax-actions {{ display:flex; gap:10px; padding:14px 18px 0 }} .pay-button {{ display:inline-block; padding:9px 12px; border-radius:7px; background:#087f5b; color:white; font-weight:700; text-decoration:none }} .pay-button.secondary {{ background:#1f5f8b }} .state-guidance-note {{ margin:14px 18px 0; padding:12px 14px; border-left:4px solid #d97706; border-radius:6px; background:#fff7df; color:#8a4b00; font-weight:700 }} .guidance-form {{ display:block; padding:14px 18px 0; border:0; border-radius:0; box-shadow:none }} .guidance-form button:disabled {{ background:#9aaabd; color:#edf2f7; cursor:not-allowed; opacity:1 }} .guidance {{ margin:14px 18px 0; border:1px solid var(--line); border-radius:8px; background:#f8fafc }} .guidance summary {{ padding:12px; cursor:pointer; color:var(--blue); font-weight:700 }} .guidance pre {{ margin:0; padding:0 12px 12px; white-space:pre-wrap; font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }} .app-footer {{ max-width:1200px; margin:-28px auto 28px; padding:0 24px; color:var(--muted); font-size:13px; text-align:center }} .app-footer a {{ color:var(--blue); font-weight:700 }}
+    .tax-actions {{ display:flex; gap:10px; padding:14px 18px 0 }} .pay-button {{ display:inline-block; padding:9px 12px; border-radius:7px; background:#087f5b; color:white; font-weight:700; text-decoration:none }} .pay-button.secondary {{ background:#1f5f8b }} .state-guidance-note {{ margin:14px 18px 0; padding:12px 14px; border-left:4px solid #d97706; border-radius:6px; background:#fff7df; color:#8a4b00; font-weight:700 }} .guidance-form {{ border:0; border-radius:0; box-shadow:none }} .rate-bracket-controls {{ display:grid; grid-template-columns:minmax(190px,1fr) auto auto; gap:10px; align-items:end; padding:14px 22px; background:#f8fafc; border-bottom:1px solid var(--line) }} .rate-bracket-controls .guidance-provider select {{ width:100% }} .rate-bracket-controls button {{ min-height:34px; margin:0; padding:6px 10px; font-size:14px; white-space:nowrap }} .guidance-form button:disabled {{ background:#9aaabd; color:#edf2f7; cursor:not-allowed; opacity:1 }} .app-footer {{ max-width:1200px; margin:-28px auto 28px; padding:0 24px; color:var(--muted); font-size:13px; text-align:center }} .app-footer a {{ color:var(--blue); font-weight:700 }}
     .secondary-action {{ background:#526d82 }} .guidance-dialog {{ width:min(1160px,96vw); max-height:92vh; padding:0; border:0; border-radius:14px; color:var(--ink); box-shadow:0 24px 70px #102a4355 }} .guidance-dialog::backdrop {{ background:#102a4388 }} .dialog-heading {{ display:flex; justify-content:space-between; gap:20px; padding:20px 22px; border-bottom:1px solid var(--line) }} .dialog-heading h2,.dialog-heading p {{ margin:0 }} .dialog-heading p {{ color:var(--muted) }} #close-guidance-dialog {{ min-width:40px; font-size:24px; background:#526d82 }} .guidance-progress {{ margin:18px 22px; padding:13px 15px; border-radius:8px; background:#e7f3ff; color:#174d72; font-weight:700 }} .guidance-progress.processing {{ border-left:5px solid #1f5f8b }} .guidance-response-grid {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding:0 22px 18px }} .guidance-response-card {{ min-width:0; padding:15px; border:1px solid var(--line); border-radius:10px; background:white }} .guidance-response-card.placeholder {{ display:grid; min-height:260px; place-content:center; color:var(--muted); text-align:center; background:#f8fafc; border-style:dashed }} .guidance-response-card h3 {{ margin:0 0 10px }} .guidance-rate-table th,.guidance-rate-table td {{ padding:7px 6px; white-space:normal; font-size:12px }} .guidance-response-card .deduction {{ padding:10px; border-radius:7px; background:#f0f7f4; font-weight:700 }} .response-actions {{ display:flex; gap:8px; margin-top:12px }} .response-actions button {{ flex:1 }} .response-actions .discard-response {{ background:#9b3a32 }} .guidance-round-message {{ margin:0; padding:0 22px 22px; color:var(--muted) }} @media(max-width:900px) {{ .guidance-response-grid {{ grid-template-columns:1fr }} }}
     * {{ box-sizing:border-box }} body {{ margin:0; background:var(--paper); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }}
     header {{ background:var(--navy); color:white; padding:32px max(24px,calc((100vw - 1200px)/2)); }} header p {{ margin:4px 0 0; color:#c7d7e6 }} h1 {{ margin:0; font-size:28px }} h2 {{ margin:0; font-size:18px }} main {{ max-width:1200px; margin:24px auto 48px; padding:0 24px }}
@@ -498,7 +513,7 @@ class InvestmentGainWebApp:
                 if self.path == "/settings":
                     try:
                         save_editable_config(form)
-                        self._send_json({"message": "Local settings saved."})
+                        self._send_json({"message": "AI provider settings saved."})
                     except OSError as exc:
                         self._send_json({"error": f"Could not save local settings: {exc}"}, HTTPStatus.BAD_REQUEST)
                     return
@@ -523,8 +538,20 @@ class InvestmentGainWebApp:
                 if self.path == "/guidance-saved":
                     try:
                         assumptions = assumptions_from_form(form)
-                        responses = application.guidance_reviews.load_candidates(selection.output_dir, selection.year, assumptions)
-                        self._send_json({"responses": responses, "selected_index": 0})
+                        saved = application.guidance_reviews.load_saved_candidates(selection.output_dir, selection.year, assumptions)
+                        selected_index = next((index for index, item in enumerate(saved) if item.selected), 0)
+                        self._send_json({
+                            "responses": [item.response for item in saved],
+                            "selected_index": selected_index,
+                            "metadata": [
+                                {
+                                    "source_provider": item.source_provider,
+                                    "manually_updated": item.manually_updated,
+                                    "selected": item.selected,
+                                }
+                                for item in saved
+                            ],
+                        })
                     except (ReportError, OSError) as exc:
                         self._send_json({"responses": [], "selected_index": 0, "warning": f"Existing saved guidance is incompatible and was not used: {exc}"})
                     return
@@ -546,7 +573,21 @@ class InvestmentGainWebApp:
                         if not isinstance(raw_responses, list) or not all(isinstance(item, dict) for item in raw_responses):
                             raise ReportError("The reviewed AI responses were not valid JSON objects.")
                         selected_index = int(form.get("selected_index", ["-1"])[0])
-                        paths = application.guidance_reviews.save_candidates(selection.output_dir, selection.year, assumptions, raw_responses, selected_index)
+                        source_providers = json.loads(form.get("source_providers", ["[]"])[0])
+                        manually_updated = json.loads(form.get("manually_updated", ["[]"])[0])
+                        if not isinstance(source_providers, list) or not all(isinstance(item, str) for item in source_providers):
+                            raise ReportError("Each reviewed response must identify its source AI provider.")
+                        if not isinstance(manually_updated, list) or not all(isinstance(item, bool) for item in manually_updated):
+                            raise ReportError("Each reviewed response must identify whether it was manually updated.")
+                        paths = application.guidance_reviews.save_candidates(
+                            selection.output_dir,
+                            selection.year,
+                            assumptions,
+                            raw_responses,
+                            selected_index,
+                            source_providers,
+                            manually_updated,
+                        )
                         self._send_json({"saved": [str(path) for path in paths], "selected": str(paths[selected_index])})
                     except (ReportError, OSError, ValueError, json.JSONDecodeError) as exc:
                         self._send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)

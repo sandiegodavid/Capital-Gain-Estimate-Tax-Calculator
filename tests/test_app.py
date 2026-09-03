@@ -313,19 +313,21 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertNotIn("existing-secret", page)
         self.assertIn("Configured — leave blank to keep it", page)
 
-    def test_local_settings_modal_keeps_api_keys_hidden(self) -> None:
+    def test_ai_provider_settings_modal_keeps_api_keys_hidden(self) -> None:
         page = _render_config_modal({"ai_provider": "gemini", "filing_status": "head_of_household", "state_residence": "CA", "openai_api_key": "existing-secret"})
 
         self.assertNotIn('id="open-local-settings"', page)
         self.assertIn('id="local-settings-dialog"', page)
         self.assertIn('id="local-settings-form"', page)
         self.assertIn('fetch("/settings"', page)
-        self.assertIn('<select name="ai_provider">', page)
-        self.assertIn('<select name="filing_status">', page)
-        self.assertIn('<select name="state_residence">', page)
-        self.assertIn('value="gemini" selected', page)
-        self.assertIn('value="head_of_household" selected', page)
-        self.assertIn('value="CA" selected', page)
+        self.assertIn('AI provider settings', page)
+        self.assertIn('data-provider="openai"', page)
+        self.assertIn('data-provider="gemini"', page)
+        self.assertIn('data-provider="openrouter"', page)
+        self.assertNotIn('<select name="ai_provider">', page)
+        self.assertNotIn('<select name="filing_status">', page)
+        self.assertNotIn('<select name="state_residence">', page)
+        self.assertIn('syncProviderSettings', page)
         self.assertNotIn("existing-secret", page)
 
     def test_records_layout_setup_endpoint_returns_source_file_instruction(self) -> None:
@@ -534,11 +536,13 @@ class InvestmentGainAppTest(unittest.TestCase):
         store = GuidanceResponseStore()
         profile = GuidanceProfile("CA", "single", 0, "gemini")
         paths = store.save(self.root / "reports", 2026, profile, [response, response, response], 1)
-        self.assertEqual(paths[1], self.root / "reports" / "ai-rate-guidance" / "2026-gemini-ca-single-0-response-2-selected.yaml")
+        self.assertEqual(paths[1], self.root / "reports" / "ai-rate-guidance" / "2026-ca-single-0-response-2-selected.yaml")
         self.assertTrue(all(path.is_file() for path in paths))
         self.assertIn("selected: true", paths[1].read_text(encoding="utf-8"))
+        self.assertIn("source_ai_provider: gemini", paths[1].read_text(encoding="utf-8"))
         self.assertIn("state_code: CA", paths[1].read_text(encoding="utf-8"))
         self.assertEqual(len(store.load_all(self.root / "reports", 2026, profile)), 3)
+        self.assertEqual(len(store.load_all(self.root / "reports", 2026, GuidanceProfile("CA", "single", 0, "openrouter"))), 3)
         self.assertEqual(store.load_all(self.root / "reports", 2026, GuidanceProfile("NY", "single", 0, "gemini")), ())
         selected = store.load_selected(self.root / "reports", 2026, profile)
         self.assertIsNotNone(selected)
@@ -611,8 +615,9 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('Get Google Gemini API rate guidance', page)
         self.assertIn('id="guidance-dialog"', page)
         self.assertIn('id="switch-guidance-button"', page)
-        self.assertIn('No saved responses', page)
-        self.assertIn('Review saved responses (${count})', page)
+        self.assertIn('Show rate brackets', page)
+        self.assertIn('Rate bracket', page)
+        self.assertIn('No saved rate brackets are available', page)
         self.assertIn('Tax profile changed. Review matching saved guidance', page)
         self.assertIn('new AbortController()', page)
         self.assertIn('5 - saved.responses.length', page)
@@ -625,6 +630,8 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('Federal ordinary income', page)
         self.assertIn('Federal long-term gains', page)
         self.assertIn('State income tax', page)
+        self.assertIn('Source AI provider:', page)
+        self.assertIn('Manually updated', page)
         self.assertIn('https://www.irs.gov/payments', page)
         guided_page = _render_tax_section(
             report,
@@ -637,9 +644,9 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('Pay California estimated tax', guided_page)
         self.assertIn('See exact formula', guided_page)
         self.assertIn('Exact tax formula', guided_page)
-        self.assertIn('class="tax-workflow-actions"', guided_page)
         self.assertIn('class="tax-formula-summary"', guided_page)
         self.assertIn('.tax-formula-summary .formula-action', guided_page)
+        self.assertIn('class="rate-bracket-controls"', guided_page)
         self.assertIn('highest rate down', guided_page)
 
     def test_end_to_end_workbook_structure_and_numeric_types(self) -> None:

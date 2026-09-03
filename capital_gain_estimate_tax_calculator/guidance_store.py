@@ -22,10 +22,28 @@ class SavedGuidanceResponse:
     path: Path
     selected: bool
     profile: GuidanceProfile | None
+    source_provider: str = ""
+    manually_updated: bool = False
 
     def assigned_to(self, profile: GuidanceProfile) -> SavedGuidanceResponse:
         """Attach the active profile to a legacy response that predates profile metadata."""
-        return SavedGuidanceResponse(self.response, self.path, self.selected, profile)
+        return SavedGuidanceResponse(
+            self.response,
+            self.path,
+            self.selected,
+            profile,
+            self.source_provider,
+            self.manually_updated,
+        )
+
+
+@dataclass(frozen=True)
+class _CandidateToSave:
+    """A validated response paired with the review metadata that belongs to it."""
+
+    response: GuidanceResponse
+    source_provider: str
+    manually_updated: bool
 
 
 class GuidanceResponseRepository(Protocol):
@@ -38,6 +56,8 @@ class GuidanceResponseRepository(Protocol):
         profile: GuidanceProfile,
         responses: list[GuidanceResponse],
         selected_index: int,
+        source_providers: list[str] | None = None,
+        manually_updated: list[bool] | None = None,
     ) -> tuple[Path, ...]: ...
 
     def load_all(self, output_dir: Path, year: int, profile: GuidanceProfile) -> tuple[SavedGuidanceResponse, ...]: ...
@@ -55,27 +75,25 @@ class GuidanceResponseStore:
         profile: GuidanceProfile,
         responses: list[GuidanceResponse],
         selected_index: int,
+        source_providers: list[str] | None = None,
+        manually_updated: list[bool] | None = None,
     ) -> tuple[Path, ...]:
         """Persist all reviewed candidates and mark the selected filename."""
         if not responses or not 0 <= selected_index < len(responses):
             raise ReportError("Choose one valid AI response before saving.")
-        validated = [validate_guidance_response(response) for response in responses]
+        candidates = self._candidates_to_save(responses, profile, source_providers, manually_updated)
         directory = self._directory(output_dir)
         directory.mkdir(parents=True, exist_ok=True)
         self._remove_previous_candidates(directory, year, profile)
 
         saved_at = datetime.now().astimezone().isoformat(timespec="seconds")
-        paths: list[Path] = []
-        for index, response in enumerate(validated):
-            selected = index == selected_index
-            path = directory / self._filename(year, profile, index, selected)
-            payload = self._payload(saved_at, year, profile, selected, response)
-            path.write_text(yaml.safe_dump(payload, allow_unicode=True, sort_keys=False), encoding="utf-8")
-            paths.append(path)
-        return tuple(paths)
+        return tuple(
+            self._write_candidate(directory, saved_at, year, profile, index, index == selected_index, candidate)
+            for index, candidate in enumerate(candidates)
+        )
 
     def load_all(self, output_dir: Path, year: int, profile: GuidanceProfile) -> tuple[SavedGuidanceResponse, ...]:
-        """Load matching responses, falling back to one legacy provider/year set when needed."""
+        """Load responses for the tax context, regardless of their source provider."""
         directory = self._directory(output_dir)
         if not directory.is_dir():
             return ()
@@ -94,10 +112,55 @@ class GuidanceResponseStore:
         return output_dir / "ai-rate-guidance"
 
     @staticmethod
-    def _remove_previous_candidates(directory: Path, year: int, profile: GuidanceProfile) -> None:
-        pattern = f"{year}-{profile.storage_key}-response-*.yaml"
-        for old_path in directory.glob(pattern):
-            old_path.unlink()
+    def _candidates_to_save(
+        responses: list[GuidanceResponse],
+        profile: GuidanceProfile,
+        source_providers: list[str] | None,
+        manually_updated: list[bool] | None,
+    ) -> tuple[_CandidateToSave, ...]:
+        validated = tuple(validate_guidance_response(response) for response in responses)
+        providers = source_providers or [profile.provider_id] * len(validated)
+        updates = manually_updated or [False] * len(validated)
+        if len(providers) != len(validated):
+            raise ReportError("Each reviewed response needs its source AI provider.")
+        if len(updates) != len(validated):
+            raise ReportError("Each reviewed response needs its edit status.")
+        return tuple(
+            _CandidateToSave(response, provider.strip().lower(), updated)
+            for response, provider, updated in zip(validated, providers, updates, strict=True)
+        )
+
+    def _write_candidate(
+        self,
+        directory: Path,
+        saved_at: str,
+        year: int,
+        profile: GuidanceProfile,
+        index: int,
+        selected: bool,
+        candidate: _CandidateToSave,
+    ) -> Path:
+        path = directory / self._filename(year, profile, index, selected)
+        payload = self._payload(
+            saved_at,
+            year,
+            profile,
+            selected,
+            candidate.response,
+            candidate.source_provider,
+            candidate.manually_updated,
+        )
+        path.write_text(yaml.safe_dump(payload, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        return path
+
+    def _remove_previous_candidates(self, directory: Path, year: int, profile: GuidanceProfile) -> None:
+        for old_path in directory.glob(f"{year}-*-response-*.yaml"):
+            try:
+                saved = self._read(old_path, False)
+            except ReportError:
+                continue
+            if saved.profile and saved.profile.matches_tax_context(profile):
+                old_path.unlink()
 
     def _load_legacy_candidates(
         self,
@@ -105,7 +168,7 @@ class GuidanceResponseStore:
         year: int,
         profile: GuidanceProfile,
     ) -> tuple[SavedGuidanceResponse, ...]:
-        """Adapt pre-profile YAML responses to the active provider/year once for compatibility."""
+        """Adapt legacy provider-specific YAML responses when no context-aware set exists."""
         paths = sorted(directory.glob(f"{year}-{profile.provider_id}-response-*.yaml"))
         return tuple(item.assigned_to(profile) for item in self._read_paths(paths) if item.profile is None)
 
@@ -116,10 +179,15 @@ class GuidanceResponseStore:
         profile: GuidanceProfile,
     ) -> tuple[SavedGuidanceResponse, ...] | None:
         """Load the current metadata-aware response set, when it exists."""
-        paths = sorted(directory.glob(f"{year}-{profile.storage_key}-response-*.yaml"))
-        if not paths:
+        paths = sorted(directory.glob(f"{year}-*-response-*.yaml"))
+        current = tuple(
+            item
+            for item in self._read_paths(paths)
+            if item.profile and item.profile.matches_tax_context(profile)
+        )
+        if not current:
             return None
-        return tuple(item for item in self._read_paths(paths) if item.profile == profile)
+        return current
 
     def _read_paths(self, paths: list[Path]) -> tuple[SavedGuidanceResponse, ...]:
         """Read one response set, defaulting a single unmarked item to selected."""
@@ -137,13 +205,16 @@ class GuidanceResponseStore:
         profile: GuidanceProfile,
         selected: bool,
         response: GuidanceResponse,
+        source_provider: str,
+        manually_updated: bool,
     ) -> dict[str, object]:
         return {
             "saved_at": saved_at,
-            "provider": profile.provider_id,
+            "source_ai_provider": source_provider,
             "report_year": year,
             "tax_profile": profile.as_dict(),
             "selected": selected,
+            "manually_updated": manually_updated,
             "response": response,
         }
 
@@ -162,4 +233,6 @@ class GuidanceResponseStore:
             path,
             bool(saved.get("selected", default_selected)),
             GuidanceProfile.from_dict(saved.get("tax_profile")) if isinstance(saved, dict) else None,
+            str(saved.get("source_ai_provider") or saved.get("provider") or "") if isinstance(saved, dict) else "",
+            bool(saved.get("manually_updated", False)) if isinstance(saved, dict) else False,
         )

@@ -37,9 +37,17 @@ class GuidanceProfile:
 
     @property
     def storage_key(self) -> str:
-        """Return the stable, human-readable key used for local response files."""
+        """Return the provider-neutral key used for local response files."""
         state = self.state_code.lower() or "none"
-        return f"{self.provider_id}-{state}-{self.filing_status}-{self.num_dependents}"
+        return f"{state}-{self.filing_status}-{self.num_dependents}"
+
+    def matches_tax_context(self, other: GuidanceProfile) -> bool:
+        """Return whether two profiles share the tax inputs needed to reuse guidance."""
+        return (
+            self.state_code == other.state_code
+            and self.filing_status == other.filing_status
+            and self.num_dependents == other.num_dependents
+        )
 
     @classmethod
     def from_dict(cls, values: object) -> GuidanceProfile | None:

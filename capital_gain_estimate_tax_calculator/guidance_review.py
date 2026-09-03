@@ -14,7 +14,7 @@ from .guidance_mapping import (
     validate_guidance_response,
 )
 from .guidance_profile import GuidanceProfile
-from .guidance_store import GuidanceResponseRepository, GuidanceResponseStore
+from .guidance_store import GuidanceResponseRepository, GuidanceResponseStore, SavedGuidanceResponse
 from .tax_estimate import TaxAssumptions
 from .tax_guidance import request_tax_rate_guidance
 
@@ -47,8 +47,17 @@ class GuidanceReviewService:
 
     def load_candidates(self, output_dir: Path, year: int, assumptions: TaxAssumptions) -> tuple[GuidanceResponse, ...]:
         """Return every saved candidate compatible with the current household inputs."""
-        saved = self._response_store.load_all(output_dir, year, self._profile(assumptions))
+        saved = self.load_saved_candidates(output_dir, year, assumptions)
         return tuple(validate_guidance_response(item.response, assumptions.filing_status) for item in saved)
+
+    def load_saved_candidates(
+        self,
+        output_dir: Path,
+        year: int,
+        assumptions: TaxAssumptions,
+    ) -> tuple[SavedGuidanceResponse, ...]:
+        """Return saved candidates with their local review metadata."""
+        return self._response_store.load_all(output_dir, year, self._profile(assumptions))
 
     def load_selected(self, output_dir: Path, year: int, assumptions: TaxAssumptions) -> AppliedGuidance | None:
         """Load and apply the locally selected candidate, if one exists."""
@@ -64,10 +73,20 @@ class GuidanceReviewService:
         assumptions: TaxAssumptions,
         responses: list[GuidanceResponse],
         selected_index: int,
+        source_providers: list[str] | None = None,
+        manually_updated: list[bool] | None = None,
     ) -> tuple[Path, ...]:
         """Validate and save each reviewed candidate with one selected marker."""
         validated = [validate_guidance_response(response, assumptions.filing_status) for response in responses]
-        return self._response_store.save(output_dir, year, self._profile(assumptions), validated, selected_index)
+        return self._response_store.save(
+            output_dir,
+            year,
+            self._profile(assumptions),
+            validated,
+            selected_index,
+            source_providers,
+            manually_updated,
+        )
 
     @staticmethod
     def _profile(assumptions: TaxAssumptions) -> GuidanceProfile:

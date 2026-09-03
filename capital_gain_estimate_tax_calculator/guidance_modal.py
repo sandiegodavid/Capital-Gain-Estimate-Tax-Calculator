@@ -3,28 +3,27 @@
 from __future__ import annotations
 
 
-def render_guidance_modal(has_saved_responses: bool) -> str:
+def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> str:
     """Render the response-review dialog and its non-blocking controller."""
-    switch_button = (
-        '<button id="switch-guidance-button" class="secondary-action" type="button" disabled>'
-        "No saved AI responses</button>"
-    )
     profile_note = (
         '<p id="guidance-profile-note" class="state-guidance-note" hidden></p>'
         if has_saved_responses
         else ""
     )
-    return switch_button + profile_note + r'''
+    return f'''
 <dialog id="guidance-dialog" class="guidance-dialog">
   <div class="dialog-heading">
-    <div><h2>AI rate guidance review</h2><p>Review and edit bracket schedules before choosing one to use.</p></div>
+    <div><h2>Rate bracket</h2><p>Review and edit bracket schedules, or request updated AI guidance.</p></div>
     <button id="close-guidance-dialog" type="button" aria-label="Close">×</button>
   </div>
+  {guidance_controls}
+  {profile_note}
   <div id="guidance-progress" class="guidance-progress" role="status">Processing requests. Please be patient…</div>
+  <p id="guidance-tax-context" class="guidance-tax-context"></p>
   <div id="guidance-response-grid" class="guidance-response-grid"></div>
   <p id="guidance-round-message" class="guidance-round-message"></p>
 </dialog>
-<script>
+''' + r'''<script>
 (() => {
   const form = document.getElementById("guidance-form");
   const openButton = document.getElementById("guidance-button");
@@ -34,6 +33,7 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
   const progress = document.getElementById("guidance-progress");
   const grid = document.getElementById("guidance-response-grid");
   const roundMessage = document.getElementById("guidance-round-message");
+  const taxContext = document.getElementById("guidance-tax-context");
   const provider = document.getElementById("ai-provider");
   const profileNote = document.getElementById("guidance-profile-note");
   const profileInputs = [
@@ -51,7 +51,6 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
   let errors = [];
   let controller = null;
   let runId = 0;
-  let profileRevision = 0;
 
   const providerLabels = {
     openai: "ChatGPT / OpenAI API",
@@ -60,16 +59,20 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
   };
 
   const activeProviderLabel = () => providerLabels[provider?.value] || "AI";
+  const updateTaxContext = () => {
+    const state = document.getElementById("state-residence")?.selectedOptions[0]?.textContent || "Not selected";
+    const filingStatus = document.getElementById("filing-status")?.selectedOptions[0]?.textContent || "Not selected";
+    const dependents = document.getElementById("dependent-count")?.value || "0";
+    if (taxContext) taxContext.textContent = `State: ${state} · Filing status: ${filingStatus} · Dependents: ${dependents}`;
+  };
   const activeProfileKey = () => JSON.stringify({
     state: document.getElementById("state-residence")?.value || "",
     filingStatus: document.getElementById("filing-status")?.value || "",
     dependents: document.getElementById("dependent-count")?.value || "0",
-    provider: provider?.value || "",
   });
   const initialProfileKey = activeProfileKey();
 
-  const syncProfileControls = async () => {
-    const revision = ++profileRevision;
+  const syncProfileControls = () => {
     const state = document.getElementById("state-residence");
     const profileFields = [
       ["state-residence", "guidance-state"],
@@ -92,26 +95,9 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
     }
     openButton.textContent = `Get ${activeProviderLabel()} rate guidance`;
     openButton.disabled = !hasState;
-    if (!switchButton) return;
+    updateTaxContext();
     if (!hasState) {
-      switchButton.disabled = true;
-      switchButton.textContent = "Select a state first";
-      return;
-    }
-    switchButton.disabled = true;
-      switchButton.textContent = "Checking saved responses…";
-    try {
-      const saved = await post("/guidance-saved");
-      if (revision !== profileRevision) return;
-      const count = saved.responses?.length || 0;
-      switchButton.disabled = count === 0;
-      switchButton.textContent = count
-        ? `Review saved responses (${count})`
-        : "No saved responses";
-    } catch (_error) {
-      if (revision !== profileRevision) return;
-      switchButton.disabled = true;
-      switchButton.textContent = "Saved responses unavailable";
+      progress.textContent = "Select a state on the dashboard before requesting AI rate guidance.";
     }
   };
 
@@ -140,6 +126,19 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
 
   const breakdownFor = (response, type) => (response.breakdowns || []).find((item) => item.type === type);
 
+  const responseMetadata = (response) => response._metadata || {};
+  const metadataNote = (response) => {
+    const metadata = responseMetadata(response);
+    const source = providerLabels[metadata.source_provider] || metadata.source_provider || "Unknown AI provider";
+    return `Source AI provider: ${source}${metadata.manually_updated ? " · Manually updated" : ""}`;
+  };
+  const markManuallyUpdated = (response) => {
+    response._metadata = { ...responseMetadata(response), manually_updated: true };
+    const index = responses.indexOf(response);
+    const note = grid.querySelector(`[data-response-metadata="${index}"]`);
+    if (note) note.textContent = metadataNote(response);
+  };
+
   const renderBreakdown = (response, type, label) => {
     const section = element("section", undefined, "guidance-breakdown");
     section.append(element("h4", label));
@@ -160,7 +159,7 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       threshold.placeholder = "Top bracket";
       threshold.value = bracket.bracket ?? "";
       threshold.setAttribute("aria-label", `${label} bracket ${index + 1} upper limit`);
-      threshold.addEventListener("input", () => { bracket.bracket = threshold.value === "" ? null : Number(threshold.value); });
+      threshold.addEventListener("input", () => { bracket.bracket = threshold.value === "" ? null : Number(threshold.value); markManuallyUpdated(response); });
       const rate = document.createElement("input");
       rate.type = "number";
       rate.min = "0";
@@ -168,12 +167,13 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       rate.step = "0.001";
       rate.value = bracket.rate ?? "";
       rate.setAttribute("aria-label", `${label} bracket ${index + 1} rate percentage`);
-      rate.addEventListener("input", () => { bracket.rate = rate.value === "" ? "" : Number(rate.value); });
+      rate.addEventListener("input", () => { bracket.rate = rate.value === "" ? "" : Number(rate.value); markManuallyUpdated(response); });
       const remove = element("button", "Remove", "remove-bracket");
       remove.type = "button";
       remove.setAttribute("aria-label", `Remove ${label} bracket ${index + 1}`);
       remove.addEventListener("click", () => {
         breakdown.brackets.splice(index, 1);
+        markManuallyUpdated(response);
         render();
       });
       const thresholdCell = element("td");
@@ -193,6 +193,7 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       const brackets = breakdown.brackets;
       const topBracket = brackets.findIndex((item) => item.bracket === null);
       brackets.splice(topBracket === -1 ? brackets.length : topBracket, 0, { bracket: 0, rate: 0 });
+      markManuallyUpdated(response);
       render();
     });
     section.append(add);
@@ -210,7 +211,8 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
     grid.replaceChildren();
     responses.forEach((response, index) => {
       const card = element("article", undefined, "guidance-response-card");
-      card.append(element("h3", `Response ${index + 1}`));
+      const metadata = responseMetadata(response);
+      card.append(element("h3", `Response ${index + 1}${metadata.selected ? " (selected)" : ""}`));
       card.append(renderBreakdown(response, "federal_ordinary", "Federal ordinary income"));
       card.append(renderBreakdown(response, "federal_long_term", "Federal long-term gains"));
       card.append(renderBreakdown(response, "state", "State income tax"));
@@ -222,12 +224,12 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       deductionAmount.step = "1";
       deductionAmount.value = deduction.amount ?? "";
       deductionAmount.setAttribute("aria-label", `Response ${index + 1} standard deduction`);
-      deductionAmount.addEventListener("input", () => { deduction.amount = deductionAmount.value === "" ? "" : Number(deductionAmount.value); });
+      deductionAmount.addEventListener("input", () => { deduction.amount = deductionAmount.value === "" ? "" : Number(deductionAmount.value); markManuallyUpdated(response); });
       deductionLabel.append(deductionAmount);
       card.append(deductionLabel);
       const actions = element("div", undefined, "response-actions");
       const use = element("button", "Use", "use-response");
-      const retry = element("button", "Discard and retry", "discard-response");
+      const retry = element("button", "Discard & get new AI response", "discard-response");
       use.type = "button";
       retry.type = "button";
       use.disabled = responses.length === 0;
@@ -237,6 +239,9 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       retry.addEventListener("click", () => discard(index));
       actions.append(use, retry);
       card.append(actions);
+      const note = element("p", metadataNote(response), "response-metadata");
+      note.dataset.responseMetadata = String(index);
+      card.append(note);
       grid.append(card);
     });
     for (let index = responses.length; index < 3; index += 1) {
@@ -268,7 +273,7 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       try {
         const result = await post("/guidance-query", { attempt: String(attempts) }, controller.signal);
         if (thisRun !== runId) return;
-        if (result.valid) responses.push(result.response);
+        if (result.valid) responses.push({ ...result.response, _metadata: { source_provider: provider?.value || "", manually_updated: false, selected: false } });
         else errors.push(`Attempt ${attempts}: ${result.error}`);
       } catch (error) {
         if (thisRun !== runId || error.name === "AbortError") return;
@@ -299,11 +304,11 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
       if (openRun !== runId || !dialog.open) return;
       if (saved.warning) errors.push(saved.warning);
       if (saved.responses.length) {
-        responses = saved.responses;
+        responses = saved.responses.map((response, index) => ({ ...response, _metadata: saved.metadata?.[index] || {} }));
         attemptLimit = Math.max(0, 5 - saved.responses.length);
         finish(`Loaded ${responses.length} saved response${responses.length === 1 ? "" : "s"}. Discard and retry can make up to ${attemptLimit} new request${attemptLimit === 1 ? "" : "s"}.`);
       } else {
-        await queryUntilComplete();
+        finish("No saved rate brackets are available. Choose an AI provider and request guidance.");
       }
     } catch (error) {
       if (openRun !== runId || !dialog.open) return;
@@ -329,7 +334,10 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
     render();
     try {
       await post("/guidance-save", {
-        responses: JSON.stringify(responses), selected_index: String(index),
+        responses: JSON.stringify(responses),
+        selected_index: String(index),
+        source_providers: JSON.stringify(responses.map((response) => responseMetadata(response).source_provider || provider?.value || "")),
+        manually_updated: JSON.stringify(responses.map((response) => Boolean(responseMetadata(response).manually_updated))),
       });
       dialog.close();
       window.location.assign(dashboardUrl());
@@ -338,7 +346,14 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
     }
   };
 
-  openButton.addEventListener("click", open);
+  openButton.addEventListener("click", async () => {
+    abortQueries();
+    responses = [];
+    attempts = 0;
+    attemptLimit = 5;
+    errors = [];
+    await queryUntilComplete();
+  });
   if (switchButton) switchButton.addEventListener("click", open);
   profileInputs.forEach((input) => {
     input.addEventListener("input", syncProfileControls);
