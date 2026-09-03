@@ -12,8 +12,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 
-from .models import NormalizedReport, ReportError, totals
-from .dashboard_selection import DashboardSelection, selection_from_form
+from .models import Lot, NormalizedReport, ReportError, SourceSummary, totals
+from .dashboard_selection import DashboardSelection, SOURCE_FILE_FIELD, SOURCE_SELECTION_MARKER, selection_from_form
 from .dashboard_data import DashboardData, load_dashboard_data
 from .finder import choose_folder_in_finder, picker_start_folder
 from .guidance_mapping import GuidanceResponse, MappedRate, TaxRateMapping, map_gain_rates
@@ -117,7 +117,28 @@ def _metric(label: str, value: Decimal) -> str:
     return f'<article class="metric"><p>{_escape(label)}</p><strong class="{tone}">{_currency(value)}</strong></article>'
 
 
-def _render_lot_row(lot: object) -> str:
+def _source_selection_inputs(selection: DashboardSelection) -> str:
+    """Preserve an explicit source-file selection across dashboard actions."""
+    if selection.included_source_files is None:
+        return ""
+    selected = "".join(
+        f'<input type="hidden" name="{SOURCE_FILE_FIELD}" value="{_escape(source_file)}">'
+        for source_file in selection.included_source_files
+    )
+    return f'<input type="hidden" name="{SOURCE_SELECTION_MARKER}" value="1">{selected}'
+
+
+def _render_source_row(item: SourceSummary, selection: DashboardSelection) -> str:
+    is_selected = selection.includes_source(item.source_file)
+    return (
+        f'<tr><td><label class="source-toggle"><input type="checkbox" data-source-toggle '
+        f'value="{_escape(item.source_file)}" {"checked" if is_selected else ""}> '
+        f'<span>{_escape(item.source_name)}</span></label><small>{_escape(item.source_file)}</small></td>'
+        f'<td>{item.included_rows:,}</td><td>{_escape(item.earliest_sale)}</td><td>{_escape(item.latest_sale)}</td></tr>'
+    )
+
+
+def _render_lot_row(lot: Lot) -> str:
     """Render one brokerage lot, falling back to the brokerage when no account is supplied."""
     account_or_brokerage = lot.account or lot.source_name
     gain_loss = lot.total_realized_gain_loss_usd
@@ -130,12 +151,18 @@ def _render_lot_row(lot: object) -> str:
     )
 
 
-def _render_security_group(symbol: str, lots: list) -> str:
+def _render_security_group(symbol: str, lots: list[Lot]) -> str:
     """Render a security summary with an on-demand table of its realized lots."""
     values = totals(lots)
     total = values["total_realized_gain_loss_usd"]
     lot_rows = "".join(_render_lot_row(lot) for lot in lots)
     return f'''<details class="security-group"><summary><span><b>{_escape(symbol)}</b><small>{_escape(lots[0].description)}</small></span><span>{len(lots):,}</span><span>{_currency(values["short_term_gain_loss_usd"])}</span><span>{_currency(values["long_term_gain_loss_usd"])}</span><span class="{'loss' if total < 0 else 'gain'}">{_currency(total)}</span></summary><div class="lot-detail"><h3>{_escape(symbol)} realized lots</h3><div class="table-wrap"><table><thead><tr><th>Account / brokerage</th><th>Acquired</th><th>Sold</th><th>Quantity</th><th>Proceeds</th><th>Cost basis</th><th>Tax term</th><th>Realized G/L</th></tr></thead><tbody>{lot_rows}</tbody></table></div></div></details>'''
+
+
+def _render_sources_section(report: NormalizedReport, selection: DashboardSelection) -> str:
+    """Render persistent include/exclude controls for each recognized source file."""
+    source_rows = "".join(_render_source_row(item, selection) for item in report.sources)
+    return f'''<style>.source-toggle{{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}}.source-toggle input{{appearance:auto;min-height:auto;width:16px;height:16px;margin:0;padding:0;accent-color:var(--gain)}}.sources td small{{display:block;margin:3px 0 0 24px;color:var(--muted);font-size:11px}}</style><section id="included-sources" class="panel sources"><div class="panel-heading"><h2>Included sources</h2><span>Use a toggle to include or exclude a source</span></div><table><thead><tr><th>Source</th><th>Records</th><th>Earliest sale</th><th>Latest sale</th></tr></thead><tbody>{source_rows}</tbody></table></section>'''
 
 
 def _render_tax_section(
@@ -185,6 +212,7 @@ def _render_tax_section(
     formula_summary = f'<div class="tax-formula-summary">{formula_button}</div>' if formula_button else ""
     guidance_modal = render_guidance_modal(guidance_path is not None)
     settings_modal = _render_config_modal(editable_config())
+    source_selection_inputs = _source_selection_inputs(selection)
     return f'''<style>
     .tax-formula-summary {{ display:grid; grid-template-columns:repeat(3,1fr); padding:12px 18px; border-top:1px solid #d9e2ec; background:#fff }}
     .tax-formula-summary .formula-action {{ grid-column:1/-1; justify-self:center }} .tax-formula-summary .formula-action button {{ min-height:34px; padding:6px 12px; border:1px solid #9ed5bc; background:#e8f5ef; color:#087f5b; font-size:13px; font-weight:700 }}
@@ -200,9 +228,9 @@ def _render_tax_section(
     @media(max-width:800px) {{ .tax-formula-summary {{ grid-template-columns:1fr }} .tax-formula-summary .formula-action {{ grid-column:1 }} .tax-formula-summary .formula-action button {{ width:100% }} .tax-workflow-actions {{ grid-template-columns:1fr }} .tax-workflow-actions #switch-guidance-button {{ grid-column:1; width:100% }} .tax-workflow-actions .guidance-form button {{ width:100% }} }}
     </style><section class="panel tax-panel">
     <div class="panel-heading"><h2>Estimated Tax</h2><span>Planning estimate — not tax advice · No liability assumed</span></div>
-    <form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}"><label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><button id="open-local-settings" class="secondary-action tax-form-action" type="button">Change settings</button><button class="tax-form-action" type="submit">Update estimate</button></form>
+    <form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><button id="open-local-settings" class="secondary-action tax-form-action" type="button">Change settings</button><button class="tax-form-action" type="submit">Update estimate</button></form>
     {rate_cards}<div class="tax-results"><article><p>Federal estimate</p><strong>{_currency(estimate.federal)}</strong></article><article><p>State estimate{f" · {assumptions.state_code}" if assumptions.state_code else ""}</p><strong>{_currency(estimate.state)}</strong></article><article><p>Estimated total tax</p><strong>{_currency(estimate.total)}</strong></article></div>{formula_summary}{state_requirement}
-    <div class="tax-workflow-actions"><form id="guidance-form" class="guidance-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}"><input id="guidance-state" type="hidden" name="state" value="{assumptions.state_code}"><input id="guidance-filing-status" type="hidden" name="filing_status" value="{_escape(assumptions.filing_status)}"><input id="guidance-dependent-count" type="hidden" name="num_dependents" value="{assumptions.num_dependents}"><input id="guidance-ordinary-income" type="hidden" name="other_ordinary_taxable_income" value="{assumptions.other_ordinary_taxable_income:g}"><label class="guidance-provider">AI provider<select id="ai-provider" name="ai_provider">{_provider_options(assumptions)}</select></label><button id="guidance-button" type="button" {'disabled' if not assumptions.state_code else ''}>Get {provider_label(assumptions.ai_provider)} rate guidance</button></form>{guidance_modal}{settings_modal}</div>
+    <div class="tax-workflow-actions"><form id="guidance-form" class="guidance-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<input id="guidance-state" type="hidden" name="state" value="{assumptions.state_code}"><input id="guidance-filing-status" type="hidden" name="filing_status" value="{_escape(assumptions.filing_status)}"><input id="guidance-dependent-count" type="hidden" name="num_dependents" value="{assumptions.num_dependents}"><input id="guidance-ordinary-income" type="hidden" name="other_ordinary_taxable_income" value="{assumptions.other_ordinary_taxable_income:g}"><label class="guidance-provider">AI provider<select id="ai-provider" name="ai_provider">{_provider_options(assumptions)}</select></label><button id="guidance-button" type="button" {'disabled' if not assumptions.state_code else ''}>Get {provider_label(assumptions.ai_provider)} rate guidance</button></form>{guidance_modal}{settings_modal}</div>
     {saved_note}<div class="tax-actions">{federal_payment_button}{state_payment}</div><p class="tax-note">Tax is calculated incrementally from the approved response's bracket schedules. Federal short-term gains are treated as ordinary income. This planning estimate excludes deductions, credits, surtaxes, carryovers, and other tax-specific adjustments.</p></section>'''
 
 
@@ -304,7 +332,11 @@ def _render_loading_dashboard(selection: DashboardSelection) -> str:
     }
     if selection.year is not None:
         query_values["year"] = selection.year
-    query = urlencode(query_values)
+    query_items = list(query_values.items())
+    if selection.included_source_files is not None:
+        query_items.append(("source_selection", "1"))
+        query_items.extend(("included_source", source_file) for source_file in selection.included_source_files)
+    query = urlencode(query_items)
     data_url = f"/dashboard?{query}"
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Loading · Capital Gain Estimate Tax Calculator</title><style>
     body {{ margin:0; min-height:100vh; display:grid; place-items:center; background:#f4f7fa; color:#102a43; font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }}
@@ -350,12 +382,11 @@ def _render_dashboard(
             years.update(report.available_sale_years)
             values = totals(report.lots)
             metrics = "".join((_metric("Total realized gain/loss", values["total_realized_gain_loss_usd"]), _metric("Short-term", values["short_term_gain_loss_usd"]), _metric("Long-term", values["long_term_gain_loss_usd"]), _metric("Proceeds", values["proceeds_usd"])))
-            source_rows = "".join(f"<tr><td>{_escape(item.source_name)}</td><td>{item.included_rows:,}</td><td>{_escape(item.earliest_sale)}</td><td>{_escape(item.latest_sale)}</td></tr>" for item in report.sources)
             security_groups = "".join(_render_security_group(symbol, lots) for symbol, lots in _security_groups(report))
             tax_section = _render_tax_section(report, selection, assumptions or TaxAssumptions(), guidance_response, mapping, guidance_path)
             summary = f'''<section class="metrics">{metrics}</section>{tax_section}
             <section class="panel"><div class="panel-heading"><h2>Security summary</h2><span>{len(report.lots):,} realized lots · select a security to view its lots</span></div><div class="security-head"><span>Security</span><span>Lots</span><span>Short-term</span><span>Long-term</span><span>Total G/L</span></div>{security_groups}</section>
-            <section class="panel sources"><h2>Included sources</h2><table><thead><tr><th>Source</th><th>Records</th><th>Earliest sale</th><th>Latest sale</th></tr></thead><tbody>{source_rows}</tbody></table></section>'''
+            {_render_sources_section(report, selection)}'''
         except (ReportError, OSError) as exc:
             error = str(exc)
     selected_year = selection.year if selection and selection.year is not None else ""
@@ -373,6 +404,7 @@ def _render_dashboard(
     message = f'<p class="notice">{_escape(notice)}</p>' if notice else ""
     download = '<p><a class="download" href="/download">Download generated workbook</a></p>' if report_ready else ""
     failure = f'<p class="error">{_escape(error)}</p>' if error else ""
+    source_selection_inputs = _source_selection_inputs(selection) if selection else ""
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Capital Gain Estimate Tax Calculator</title><style>
     :root {{ color-scheme: light; --ink:#102a43; --muted:#627d98; --paper:#f4f7fa; --line:#d9e2ec; --navy:#15324b; --blue:#1f5f8b; --gain:#087f5b; --loss:#b42318; }}
     .tax-actions {{ display:flex; gap:10px; padding:14px 18px 0 }} .pay-button {{ display:inline-block; padding:9px 12px; border-radius:7px; background:#087f5b; color:white; font-weight:700; text-decoration:none }} .pay-button.secondary {{ background:#1f5f8b }} .state-guidance-note {{ margin:14px 18px 0; padding:12px 14px; border-left:4px solid #d97706; border-radius:6px; background:#fff7df; color:#8a4b00; font-weight:700 }} .guidance-form {{ display:block; padding:14px 18px 0; border:0; border-radius:0; box-shadow:none }} .guidance-form button:disabled {{ background:#9aaabd; color:#edf2f7; cursor:not-allowed; opacity:1 }} .guidance {{ margin:14px 18px 0; border:1px solid var(--line); border-radius:8px; background:#f8fafc }} .guidance summary {{ padding:12px; cursor:pointer; color:var(--blue); font-weight:700 }} .guidance pre {{ margin:0; padding:0 12px 12px; white-space:pre-wrap; font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }} .app-footer {{ max-width:1200px; margin:-28px auto 28px; padding:0 24px; color:var(--muted); font-size:13px; text-align:center }} .app-footer a {{ color:var(--blue); font-weight:700 }}
@@ -382,8 +414,8 @@ def _render_dashboard(
     form,.panel,.metric {{ background:white; border:1px solid var(--line); border-radius:12px; box-shadow:0 1px 2px #102a4310 }} form {{ display:grid; grid-template-columns:120px 1fr auto; gap:12px; align-items:end; padding:18px; }} label {{ display:grid; gap:5px; color:var(--muted); font-size:12px; font-weight:600 }} input,select,button {{ min-height:38px; border-radius:7px; border:1px solid #b9c8d6; padding:8px; font:inherit }} button {{ background:var(--blue); color:white; border:0; cursor:pointer; font-weight:700 }} .load-data-form {{ grid-template-columns:140px minmax(0,1fr) auto; padding:16px 18px }} .source-folder-control {{ min-width:0 }} .source-folder-row {{ display:flex; min-width:0; gap:8px }} .source-folder-path {{ display:block; flex:1; min-width:0; min-height:38px; overflow:hidden; padding:8px 10px; border:1px solid #b9c8d6; border-radius:7px; background:#f8fafc; color:var(--ink); font-size:13px; font-weight:500; line-height:20px; text-overflow:ellipsis; white-space:nowrap }} .source-folder-button {{ flex:0 0 auto; min-width:108px; padding-inline:12px; background:#526d82 }} .load-data-button {{ padding-inline:18px }} .source-folder-status {{ margin:0; color:var(--muted); font-size:12px }} .source-folder-status:empty {{ display:none }} .source-folder-status.error {{ color:#b42318 }} .report-actions {{ grid-template-columns:minmax(280px,1fr) auto auto auto; align-items:center }} .report-actions .checkbox {{ display:flex; align-items:center; gap:8px; white-space:nowrap }} .report-actions .checkbox input {{ appearance:auto; min-height:auto; width:18px; height:18px; margin:0; padding:0 }} .metrics {{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:20px 0 }} .metric {{ padding:16px }} .metric p,.panel-heading span {{ margin:0; color:var(--muted); font-size:13px }} .metric strong {{ display:block; margin-top:6px; font-size:24px }} .gain {{ color:var(--gain) }} .loss {{ color:var(--loss) }} .panel {{ margin-top:18px; overflow:hidden }} .panel-heading {{ display:flex; justify-content:space-between; align-items:center; padding:16px 18px; border-bottom:1px solid var(--line) }} .tax-form {{ grid-template-columns:repeat(4,minmax(145px,1fr)) 145px 145px; border:0; border-radius:0; box-shadow:none; border-bottom:1px solid var(--line) }} .tax-form > label {{ white-space:nowrap }} .tax-form-action {{ align-self:end; min-height:34px; padding:6px 8px; font-size:13px; white-space:nowrap }} .mapped-rates {{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line) }} .mapped-rates article {{ padding:16px 18px; background:#f8fafc }} .mapped-rates p,.mapped-rates small {{ display:block; margin:0; color:var(--muted); font-size:13px }} .mapped-rates strong {{ display:block; margin:5px 0; font-size:22px }} .tax-results {{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line) }} .tax-results article {{ margin:0; padding:16px 18px; background:white }} .tax-results p,.tax-note {{ margin:0; color:var(--muted); font-size:13px }} .tax-results strong {{ display:block; margin-top:5px; font-size:22px }} .tax-note {{ padding:14px 18px }} .security-head,.security-group summary {{ display:grid; grid-template-columns:minmax(250px,1fr) 80px 130px 130px 130px; gap:12px; align-items:center; padding:12px 18px }} .security-head {{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; background:#f8fafc }} .security-group {{ display:block; border-top:1px solid var(--line) }} .security-group summary {{ cursor:pointer; list-style:none }} .security-group summary::-webkit-details-marker {{ display:none }} .security-group summary:hover {{ background:#f8fafc }} .security-group summary span:first-child {{ display:grid; gap:2px }} .security-group summary small {{ color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }} .lot-detail {{ padding:14px 18px 18px; background:#f8fafc }} .lot-detail h3 {{ margin:0 0 10px; font-size:14px }} .sources h2 {{ padding:16px 18px 0 }} table {{ border-collapse:collapse; width:100% }} th,td {{ padding:11px 14px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap }} th {{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.03em }} td:last-child {{ font-weight:600 }} .table-wrap {{ overflow:auto }} .notice,.error {{ padding:12px 14px; border-radius:8px; background:#dff7ed; color:#065f46 }} .error {{ background:#fee4e2; color:#8a1c13 }} .actions {{ display:flex; gap:10px; align-items:center }} .download {{ color:var(--blue); font-weight:700 }} @media(max-width:800px) {{ form,.load-data-form,.report-actions,.tax-form {{ grid-template-columns:1fr }} .tax-form-action {{ width:100% }} .report-actions .checkbox {{ min-height:38px }} .load-data-button {{ width:100% }} .tax-results,.mapped-rates {{ grid-template-columns:1fr }} .security-head,.security-group summary {{ min-width:720px }} .security-group,.security-head {{ overflow-x:auto }} .metrics {{ grid-template-columns:repeat(2,1fr) }} }} @media(max-width:480px) {{ .source-folder-row {{ flex-direction:column }} .source-folder-button {{ width:100% }} .metrics {{ grid-template-columns:1fr }} main {{ padding:0 14px }} }}
     </style></head><body><header><h1>Capital Gain Estimate Tax Calculator</h1><p>Understand realized gains and explore estimated taxes.</p></header><main>
     <form class="load-data-form" method="get" action="/dashboard" style="align-items:start"><label>Sale year<select id="sale-year" name="year">{options}</select></label><label class="source-folder-control">Source folder<input id="source-folder-value" type="hidden" name="source" value="{_escape(source)}"><span class="source-folder-row"><output id="source-folder-path" class="source-folder-path" title="{_escape(source)}">{_escape(source) if source else "No folder selected"}</output><button id="source-folder" class="source-folder-button" type="submit" formaction="/open-realized-gains-root" formmethod="post" formtarget="finder-result">Choose folder</button></span><span id="source-folder-status" class="source-folder-status" role="status"></span></label><label class="load-data-control"><span aria-hidden="true">&nbsp;</span><button class="load-data-button" type="submit" formaction="/dashboard" formmethod="get">Load data</button></label></form><iframe name="finder-result" hidden></iframe><form id="setup-realized-gains-form" method="post" action="/setup-realized-gains-root" target="finder-result" style="display:none"><input id="setup-realized-gains-parent" name="parent"><input id="setup-realized-gains-year" name="year"></form>{message}{download}{failure}{summary}
-    <form class="report-actions" method="post" action="/generate" style="margin-top:18px"><input type="hidden" name="year" value="{_escape(selected_year)}"><input type="hidden" name="source" value="{_escape(source)}"><label>Report folder<input name="output" value="{_escape(output)}" placeholder="…/2026/reports"></label><label class="checkbox"><input name="audit" type="checkbox"> Keep audit files</label><label class="checkbox"><input name="overwrite" type="checkbox" checked> Archive existing report</label><button type="submit">Create Excel report</button></form>
-    </main><footer class="app-footer">Developed by DC Technology Consulting · Open-source, free use · <a href="/terms">Terms of Service</a></footer><script>const sourceFolderStatus=document.getElementById("source-folder-status"),sourceFolderValue=document.getElementById("source-folder-value"),sourceFolderPath=document.getElementById("source-folder-path"); window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!sourceFolderStatus)return; sourceFolderStatus.textContent=event.data.message; sourceFolderStatus.classList.toggle("error",!event.data.ok); if(event.data.source){{if(sourceFolderValue)sourceFolderValue.value=event.data.source;if(sourceFolderPath){{sourceFolderPath.textContent=event.data.source;sourceFolderPath.title=event.data.source;}}}}}});</script><script>(()=>{{const status=document.getElementById("source-folder-status"),setupForm=document.getElementById("setup-realized-gains-form"),parent=document.getElementById("setup-realized-gains-parent"),year=document.getElementById("setup-realized-gains-year"),saleYear=document.getElementById("sale-year");window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!event.data.setup_parent||!status||!setupForm||!parent||!year)return;const button=document.createElement("button");button.type="button";button.textContent="Set up folders";button.addEventListener("click",()=>{{parent.value=event.data.setup_parent;year.value=saleYear?.value||String(new Date().getFullYear());setupForm.requestSubmit();}});status.replaceChildren(document.createTextNode("Create a standard Realized Gains folder here? "),button);}});}})();</script></body></html>'''
+    <form class="report-actions" method="post" action="/generate" style="margin-top:18px"><input type="hidden" name="year" value="{_escape(selected_year)}"><input type="hidden" name="source" value="{_escape(source)}">{source_selection_inputs}<label>Report folder<input name="output" value="{_escape(output)}" placeholder="…/2026/reports"></label><label class="checkbox"><input name="audit" type="checkbox"> Keep audit files</label><label class="checkbox"><input name="overwrite" type="checkbox" checked> Archive existing report</label><button type="submit">Create Excel report</button></form>
+    </main><footer class="app-footer">Developed by DC Technology Consulting · Open-source, free use · <a href="/terms">Terms of Service</a></footer><script>const sourceFolderStatus=document.getElementById("source-folder-status"),sourceFolderValue=document.getElementById("source-folder-value"),sourceFolderPath=document.getElementById("source-folder-path"); window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!sourceFolderStatus)return; sourceFolderStatus.textContent=event.data.message; sourceFolderStatus.classList.toggle("error",!event.data.ok); if(event.data.source){{if(sourceFolderValue)sourceFolderValue.value=event.data.source;if(sourceFolderPath){{sourceFolderPath.textContent=event.data.source;sourceFolderPath.title=event.data.source;}}}}}});</script><script>(()=>{{const status=document.getElementById("source-folder-status"),setupForm=document.getElementById("setup-realized-gains-form"),parent=document.getElementById("setup-realized-gains-parent"),year=document.getElementById("setup-realized-gains-year"),saleYear=document.getElementById("sale-year");window.addEventListener("message",event=>{{if(event.origin!==window.location.origin||event.data?.type!=="finder-result"||!event.data.setup_parent||!status||!setupForm||!parent||!year)return;const button=document.createElement("button");button.type="button";button.textContent="Set up folders";button.addEventListener("click",()=>{{parent.value=event.data.setup_parent;year.value=saleYear?.value||String(new Date().getFullYear());setupForm.requestSubmit();}});status.replaceChildren(document.createTextNode("Create a standard Realized Gains folder here? "),button);}});}})();</script><script>(()=>{{const toggles=[...document.querySelectorAll("[data-source-toggle]")];toggles.forEach(toggle=>toggle.addEventListener("change",()=>{{const selected=toggles.filter(item=>item.checked);if(!selected.length){{toggle.checked=true;return;}}const url=new URL(window.location.href);url.searchParams.set("source_selection","1");url.searchParams.delete("included_source");selected.forEach(item=>url.searchParams.append("included_source",item.value));url.hash="included-sources";window.location.assign(url);}}));}})();</script></body></html>'''
 
 
 class InvestmentGainWebApp:
@@ -520,7 +552,14 @@ class InvestmentGainWebApp:
                         self._send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
                     return
                 try:
-                    report_path, _ = generate_report(selection.source_dir, selection.year, selection.output_dir, overwrite="overwrite" in form, keep_audit_files="audit" in form)
+                    report_path, _ = generate_report(
+                        selection.source_dir,
+                        selection.year,
+                        selection.output_dir,
+                        overwrite="overwrite" in form,
+                        keep_audit_files="audit" in form,
+                        included_source_files=selection.included_source_files,
+                    )
                     application.latest_report = report_path
                     message = f"Created {report_path.name}. Download it from this browser session."
                     self._send_html(_render_dashboard(selection, notice=message, report_ready=True))

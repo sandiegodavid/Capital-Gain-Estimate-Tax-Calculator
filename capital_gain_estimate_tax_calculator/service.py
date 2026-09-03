@@ -42,9 +42,10 @@ def generate_report(
     overwrite: bool = False,
     backup_existing: bool = True,
     keep_audit_files: bool = False,
+    included_source_files: tuple[str, ...] | None = None,
 ) -> tuple[Path, dict[str, object]]:
     """Normalize broker exports, produce the workbook, and optionally retain audit data."""
-    report = normalize_sources(input_dir, year)
+    report = normalize_sources(input_dir, year).with_selected_sources(included_source_files)
     destination_dir = (output_dir or default_output_dir(input_dir)).expanduser().resolve()
     output_path = destination_dir / f"{report.report_year}-investment-gain-report.xlsx"
     if output_path.exists() and not overwrite:

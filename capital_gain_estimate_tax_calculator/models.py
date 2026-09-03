@@ -58,6 +58,22 @@ class NormalizedReport:
     sources: tuple[SourceSummary, ...]
     ignored_csv_files: tuple[str, ...]
 
+    def with_selected_sources(self, source_files: tuple[str, ...] | None) -> NormalizedReport:
+        """Return this report limited to explicitly selected source-file paths."""
+        if source_files is None:
+            return self
+        selected_files = frozenset(source_files)
+        selected_lots = tuple(lot for lot in self.lots if lot.source_file in selected_files)
+        if not selected_lots:
+            raise ReportError("Select at least one source that contains realized gain/loss rows for this sale year.")
+        return NormalizedReport(
+            self.report_year,
+            self.available_sale_years,
+            selected_lots,
+            self.sources,
+            self.ignored_csv_files,
+        )
+
 
 def classify_tax_term(short_term: Decimal, long_term: Decimal, disallowed: Decimal) -> str:
     if short_term != 0 and long_term == 0:

@@ -21,7 +21,7 @@ class DashboardDataLoader:
     """Load dashboard data behind a focused, replaceable application boundary."""
 
     def load(self, selection: DashboardSelection) -> DashboardData:
-        report = normalize_sources(selection.source_dir, selection.year)
+        report = normalize_sources(selection.source_dir, selection.year).with_selected_sources(selection.included_source_files)
         return DashboardData(selection.with_year(report.report_year), report)
 
 

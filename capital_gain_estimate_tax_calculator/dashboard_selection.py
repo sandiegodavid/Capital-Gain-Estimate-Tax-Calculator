@@ -14,6 +14,8 @@ from .validation import parse_year
 
 FormValues = dict[str, list[str]]
 RecordsRootProvider = Callable[[], Path | None]
+SOURCE_SELECTION_MARKER = "source_selection"
+SOURCE_FILE_FIELD = "included_source"
 
 
 @dataclass(frozen=True)
@@ -23,10 +25,15 @@ class DashboardSelection:
     source_dir: Path
     output_dir: Path
     year: int | None
+    included_source_files: tuple[str, ...] | None = None
 
     def with_year(self, year: int) -> DashboardSelection:
         """Return this selection after data-based year detection."""
         return replace(self, year=year)
+
+    def includes_source(self, source_file: str) -> bool:
+        """Return whether a source is included by the current selection."""
+        return self.included_source_files is None or source_file in self.included_source_files
 
 
 @dataclass(frozen=True)
@@ -100,7 +107,8 @@ class DashboardSelectionService:
         effective_year = requested_year if requested_year is not None else resolution.inferred_year
         output_value = _form_value(values, "output")
         output_dir = Path(output_value).expanduser() if output_value else default_output_dir(resolution.source_dir)
-        return DashboardSelection(resolution.source_dir, output_dir, effective_year)
+        included_source_files = _selected_source_files(values)
+        return DashboardSelection(resolution.source_dir, output_dir, effective_year, included_source_files)
 
 
 def selection_from_form(
@@ -116,6 +124,13 @@ def selection_from_form(
 def _form_value(values: FormValues, name: str, default: str = "") -> str:
     """Read one browser form value as trimmed text."""
     return values.get(name, [default])[0].strip()
+
+
+def _selected_source_files(values: FormValues) -> tuple[str, ...] | None:
+    """Keep duplicate-free selections while distinguishing no selection from all sources."""
+    if SOURCE_SELECTION_MARKER not in values:
+        return None
+    return tuple(dict.fromkeys(values.get(SOURCE_FILE_FIELD, [])))
 
 
 def _optional_year(value: str) -> int | None:

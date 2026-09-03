@@ -612,7 +612,7 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('id="guidance-dialog"', page)
         self.assertIn('id="switch-guidance-button"', page)
         self.assertIn('No saved responses', page)
-        self.assertIn('Review or switch ${count} saved ${activeProviderLabel()} response', page)
+        self.assertIn('Review saved responses (${count})', page)
         self.assertIn('Tax profile changed. Review matching saved guidance', page)
         self.assertIn('new AbortController()', page)
         self.assertIn('5 - saved.responses.length', page)
