@@ -611,7 +611,7 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertIn('Get Google Gemini API rate guidance', page)
         self.assertIn('id="guidance-dialog"', page)
         self.assertIn('id="switch-guidance-button"', page)
-        self.assertIn('No saved ${activeProviderLabel()} responses', page)
+        self.assertIn('No saved responses', page)
         self.assertIn('Review or switch ${count} saved ${activeProviderLabel()} response', page)
         self.assertIn('Tax profile changed. Review matching saved guidance', page)
         self.assertIn('new AbortController()', page)

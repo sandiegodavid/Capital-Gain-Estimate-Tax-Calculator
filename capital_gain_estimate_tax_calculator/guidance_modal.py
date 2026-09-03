@@ -95,23 +95,23 @@ def render_guidance_modal(has_saved_responses: bool) -> str:
     if (!switchButton) return;
     if (!hasState) {
       switchButton.disabled = true;
-      switchButton.textContent = "Select a state to review saved guidance";
+      switchButton.textContent = "Select a state first";
       return;
     }
     switchButton.disabled = true;
-    switchButton.textContent = `Checking saved ${activeProviderLabel()} responses…`;
+      switchButton.textContent = "Checking saved responses…";
     try {
       const saved = await post("/guidance-saved");
       if (revision !== profileRevision) return;
       const count = saved.responses?.length || 0;
       switchButton.disabled = count === 0;
       switchButton.textContent = count
-        ? `Review or switch ${count} saved ${activeProviderLabel()} response${count === 1 ? "" : "s"}`
-        : `No saved ${activeProviderLabel()} responses`;
+        ? `Review saved responses (${count})`
+        : "No saved responses";
     } catch (_error) {
       if (revision !== profileRevision) return;
       switchButton.disabled = true;
-      switchButton.textContent = `Saved ${activeProviderLabel()} responses unavailable`;
+      switchButton.textContent = "Saved responses unavailable";
     }
   };
 
