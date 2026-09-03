@@ -1,11 +1,11 @@
 {
-  "realized_gains_root": "",
+  "realized_gains_root": "/path/to/Financial Records/Investments/Realized Gains",
   "ai_provider": "openrouter",
   "openai_api_key": "",
   "openai_model": "gpt-5.6",
   "gemini_api_key": "",
   "gemini_model": "gemini-3.7-flash",
-  "openrouter_api_key": "",
+  "openrouter_api_key": "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",
   "openrouter_model": "openrouter/free",
   "filing_status": "head_of_household",
   "num_dependents": 2,
