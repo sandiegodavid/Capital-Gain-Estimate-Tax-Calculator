@@ -25,18 +25,6 @@ class SavedGuidanceResponse:
     source_provider: str = ""
     manually_updated: bool = False
 
-    def assigned_to(self, profile: GuidanceProfile) -> SavedGuidanceResponse:
-        """Attach the active profile to a legacy response that predates profile metadata."""
-        return SavedGuidanceResponse(
-            self.response,
-            self.path,
-            self.selected,
-            profile,
-            self.source_provider,
-            self.manually_updated,
-        )
-
-
 @dataclass(frozen=True)
 class _CandidateToSave:
     """A validated response paired with the review metadata that belongs to it."""
@@ -97,10 +85,7 @@ class GuidanceResponseStore:
         directory = self._directory(output_dir)
         if not directory.is_dir():
             return ()
-        current = self._load_current_candidates(directory, year, profile)
-        if current is not None:
-            return current
-        return self._load_legacy_candidates(directory, year, profile)
+        return self._load_current_candidates(directory, year, profile) or ()
 
     def load_selected(self, output_dir: Path, year: int, profile: GuidanceProfile) -> SavedGuidanceResponse | None:
         """Load the marked response, or the first response if none is marked."""
@@ -161,16 +146,6 @@ class GuidanceResponseStore:
                 continue
             if saved.profile and saved.profile.matches_tax_context(profile):
                 old_path.unlink()
-
-    def _load_legacy_candidates(
-        self,
-        directory: Path,
-        year: int,
-        profile: GuidanceProfile,
-    ) -> tuple[SavedGuidanceResponse, ...]:
-        """Adapt legacy provider-specific YAML responses when no context-aware set exists."""
-        paths = sorted(directory.glob(f"{year}-{profile.provider_id}-response-*.yaml"))
-        return tuple(item.assigned_to(profile) for item in self._read_paths(paths) if item.profile is None)
 
     def _load_current_candidates(
         self,

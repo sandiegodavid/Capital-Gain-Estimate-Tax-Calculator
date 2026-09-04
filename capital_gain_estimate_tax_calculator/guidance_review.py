@@ -45,11 +45,6 @@ class GuidanceReviewService:
         response = decode_guidance_response(self._request_guidance(year, assumptions))
         return validate_guidance_response(response, assumptions.filing_status)
 
-    def load_candidates(self, output_dir: Path, year: int, assumptions: TaxAssumptions) -> tuple[GuidanceResponse, ...]:
-        """Return every saved candidate compatible with the current household inputs."""
-        saved = self.load_saved_candidates(output_dir, year, assumptions)
-        return tuple(validate_guidance_response(item.response, assumptions.filing_status) for item in saved)
-
     def load_saved_candidates(
         self,
         output_dir: Path,

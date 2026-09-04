@@ -91,7 +91,7 @@ def _render_config_modal(values: dict[str, object]) -> str:
         for provider_id, keys in AI_PROVIDER_CONFIG_KEYS.items()
     )
     return f'''<style>
-  .local-settings-dialog {{ width:min(760px,94vw); max-height:90vh; padding:0; border:0; border-radius:14px; color:#102a43; box-shadow:0 24px 70px #102a4355 }} .local-settings-dialog::backdrop {{ background:#102a4388 }} .local-settings-note {{ margin:18px 22px 0; color:#627d98 }} .local-settings-form {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:18px 22px 22px; padding:0; border:0; box-shadow:none }} .provider-config {{ grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px }} .provider-config[hidden] {{ display:none }} .local-settings-form label {{ display:grid; gap:5px; color:#627d98; font-size:12px; font-weight:700 }} .local-settings-form input,.local-settings-form select {{ min-height:38px; padding:8px; border:1px solid #b9c8d6; border-radius:7px; font:inherit }} .local-settings-form small {{ font-weight:400 }} .local-settings-actions {{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:12px }} .local-settings-actions p {{ margin:0; color:#627d98 }} @media(max-width:640px) {{ .local-settings-form,.provider-config {{ grid-template-columns:1fr }} }}
+  .local-settings-dialog {{ width:min(760px,94vw); max-height:90vh; padding:0; border:0; border-radius:14px; color:#102a43; box-shadow:0 24px 70px #102a4355 }} .local-settings-dialog::backdrop {{ background:#102a4388 }} .local-settings-note {{ margin:18px 22px 0; color:#627d98 }} .local-settings-form {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:start; margin:18px 22px 22px; padding:0; border:0; box-shadow:none }} .provider-config {{ grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:start }} .provider-config[hidden] {{ display:none }} .local-settings-form label {{ display:grid; gap:5px; color:#627d98; font-size:12px; font-weight:700 }} .local-settings-form input,.local-settings-form select {{ min-height:38px; padding:8px; border:1px solid #b9c8d6; border-radius:7px; font:inherit }} .local-settings-form small {{ font-weight:400 }} .local-settings-actions {{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; gap:12px }} .local-settings-actions p {{ margin:0; color:#627d98 }} @media(max-width:640px) {{ .local-settings-form,.provider-config {{ grid-template-columns:1fr }} }}
 </style><dialog id="local-settings-dialog" class="local-settings-dialog">
   <div class="dialog-heading"><div><h2 id="provider-settings-title">AI provider settings</h2><p>Saved only in config.local.json on this Mac.</p></div><button id="close-local-settings" type="button" aria-label="Close">×</button></div>
   <p class="local-settings-note">Configure the provider selected in Rate bracket. API keys remain hidden; leave a key blank to keep it.</p>
@@ -201,14 +201,17 @@ def _render_tax_section(
         effective_mapping = map_gain_rates(
             guidance_response,
             assumptions.other_ordinary_taxable_income,
-            short_term_gain,
-            long_term_gain,
+            max(short_term_gain - assumptions.short_term_carryover_loss, Decimal("0")),
+            max(long_term_gain - assumptions.long_term_carryover_loss, Decimal("0")),
         )
     formula = build_tax_formula(
         guidance_response,
         assumptions.other_ordinary_taxable_income,
         short_term_gain,
         long_term_gain,
+        assumptions.short_term_carryover_loss,
+        assumptions.long_term_carryover_loss,
+        assumptions.filing_status,
     ) if guidance_response is not None else None
     federal_payment = payment_website("US")
     state_payment_website = payment_website(assumptions.state_code)
@@ -238,14 +241,17 @@ def _render_tax_section(
     .rate-bracket-controls {{ grid-template-columns:235px auto auto; justify-content:start }}
     .response-metadata {{ margin:12px 0 0; color:#627d98; font-size:12px }}
     .guidance-tax-context {{ margin:0 22px 14px; color:#315d7d; font-size:13px; font-weight:700 }}
-    .tax-form {{ grid-template-columns:repeat(4,minmax(145px,1fr)) 145px }}
-    .tax-form-action {{ min-height:38px }}
+    @keyframes guidance-pulse {{ 0%,100% {{ background:#e7f3ff; box-shadow:inset 0 0 0 0 #8fc4e6 }} 50% {{ background:#d2eafa; box-shadow:inset 0 0 0 2px #8fc4e6,0 0 12px #8fc4e655 }} }}
+    .guidance-progress.processing {{ animation:guidance-pulse 1.5s ease-in-out infinite }}
+    @media(prefers-reduced-motion:reduce) {{ .guidance-progress.processing {{ animation:none }} }}
+    .tax-form {{ grid-template-columns:repeat(4,minmax(180px,1fr)); align-items:end }}
+    .tax-form-action {{ min-height:38px; grid-column:3 / span 2 }}
     @media(max-width:800px) {{ .tax-formula-summary {{ align-items:stretch }} .tax-formula-summary .formula-action button,.rate-bracket-action {{ width:100% }} .rate-bracket-controls {{ grid-template-columns:1fr }} .rate-bracket-controls button {{ width:100% }} }}
     </style><section class="panel tax-panel">
     <div class="panel-heading"><h2>Estimated Tax</h2><span>Planning estimate — not tax advice · No liability assumed</span></div>
-    <form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><button class="tax-form-action" type="submit">Update estimate</button></form>
+    <form method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{selection.year}"><input type="hidden" name="source" value="{_escape(selection.source_dir)}"><input type="hidden" name="output" value="{_escape(selection.output_dir)}">{source_selection_inputs}<label>State residence<select id="state-residence" name="state">{state_options}</select></label><label>Filing status<select id="filing-status" name="filing_status">{_filing_options(assumptions)}</select></label><label>Number of dependents<input id="dependent-count" name="num_dependents" type="number" min="0" max="99" step="1" value="{assumptions.num_dependents}"></label><label>Other ordinary taxable income ($)<input id="ordinary-income" name="other_ordinary_taxable_income" type="number" min="0" step="1" value="{assumptions.other_ordinary_taxable_income:g}"></label><label>Short-term carryover loss from past year ($)<input name="short_term_carryover_loss" type="number" min="0" step="1" value="{assumptions.short_term_carryover_loss:g}"></label><label>Long-term carryover loss from past year ($)<input name="long_term_carryover_loss" type="number" min="0" step="1" value="{assumptions.long_term_carryover_loss:g}"></label><button class="tax-form-action" type="submit">Update estimate</button></form>
     {rate_cards}<div class="tax-results"><article><p>Federal estimate</p><strong>{_currency(estimate.federal)}</strong></article><article><p>State estimate{f" · {assumptions.state_code}" if assumptions.state_code else ""}</p><strong>{_currency(estimate.state)}</strong></article><article><p>Estimated total tax</p><strong>{_currency(estimate.total)}</strong></article></div>{formula_summary}{state_requirement}
-    {guidance_modal}{settings_modal}
+    {guidance_modal}{settings_modal}<script>(()=>{{const form=document.querySelector(".tax-form"),key="capital-gain-estimate-scroll-y",saved=sessionStorage.getItem(key);if(saved!==null){{sessionStorage.removeItem(key);requestAnimationFrame(()=>window.scrollTo(0,Number(saved)));}}form?.addEventListener("submit",()=>sessionStorage.setItem(key,String(window.scrollY)));}})();</script>
     <p class="tax-note">Tax is calculated incrementally from the approved response's bracket schedules. Federal short-term gains are treated as ordinary income. This planning estimate excludes deductions, credits, surtaxes, carryovers, and other tax-specific adjustments.</p></section>'''
 
 
@@ -280,8 +286,8 @@ def _render_formula_button(formula: TaxFormula | None) -> str:
     if formula is None:
         return ""
     rows = "".join(_formula_row(line, formula) for line in (formula.federal_short_term, formula.federal_long_term, formula.state))
-    return f'''<div class="formula-action"><button id="show-tax-formula" type="button">See exact formula</button></div>
-    <dialog id="tax-formula-dialog" class="tax-formula-dialog"><div class="dialog-heading"><div><h2>Exact tax formula</h2><p>The selected response's standard deduction is applied to other ordinary income plus short-term gain/loss first. Each tax then adds only the applicable gain portions by bracket, from the highest rate down.</p></div><button id="close-tax-formula" type="button" aria-label="Close">×</button></div><div class="formula-note">Federal short-term and state bracket expressions use their full taxable-income totals, so their bracket amounts add to the total shown. The tax amount remains the estimated incremental tax from investment gains. For long-term gains, any standard deduction left after ordinary and short-term income reduces long-term gain; otherwise the taxable long-term amount is the full long-term gain.</div><div class="table-wrap"><table><thead><tr><th>Tax type</th><th>Total taxable income</th><th>Applicable bracket formula</th><th>Tax amount</th></tr></thead><tbody>{rows}</tbody></table></div></dialog>
+    return f'''<style>.tax-formula-dialog th:first-child,.tax-formula-dialog td:first-child{{position:sticky;left:0;z-index:1;background:#fff}}.tax-formula-dialog th:first-child{{z-index:2;background:#f8fafc}}</style><div class="formula-action"><button id="show-tax-formula" type="button">See exact formula</button></div>
+    <dialog id="tax-formula-dialog" class="tax-formula-dialog"><div class="dialog-heading"><div><h2>Exact tax formula</h2><p>Federal and state deductions are applied separately. Each tax then adds only the applicable gain portions by bracket, from the highest rate down.</p></div><button id="close-tax-formula" type="button" aria-label="Close">×</button></div><div class="formula-note">Short- and long-term carryover losses first offset their matching gain type. Any combined excess reduces ordinary income up to $3,000, or $1,500 for married filing separately; this planning estimate applies the same rule to state. Federal short-term and state bracket expressions use their full taxable-income totals, so their bracket amounts add to the total shown.</div><div class="table-wrap"><table><thead><tr><th>Tax type</th><th>Total taxable income</th><th>Applicable bracket formula</th><th>Tax amount</th></tr></thead><tbody>{rows}</tbody></table></div></dialog>
     <script>(()=>{{const open=document.getElementById("show-tax-formula"),dialog=document.getElementById("tax-formula-dialog"),close=document.getElementById("close-tax-formula");if(open&&dialog&&close){{open.addEventListener("click",()=>dialog.showModal());close.addEventListener("click",()=>dialog.close());}}}})();</script>'''
 
 
@@ -299,13 +305,13 @@ def _formula_row(line, formula) -> str:
             f"{_currency(formula.other_ordinary_income)} other ordinary income + "
             f"{_currency(formula.short_term_gain)} short-term gain + "
             f"{_currency(formula.long_term_gain)} long-term gain − "
-            f"{_currency(formula.standard_deduction)} standard deduction = {_currency(line.closing_income)}"
+            f"{_currency(formula.state_standard_deduction)} state standard deduction = {_currency(line.closing_income)}"
         )
     else:
         taxable_income = (
             f"max({_currency(formula.other_ordinary_income)} other ordinary income + "
             f"{_currency(formula.short_term_gain)} short-term gain − "
-            f"{_currency(formula.standard_deduction)} standard deduction, $0)"
+            f"{_currency(formula.federal_standard_deduction)} federal standard deduction, $0)"
         )
         taxable_income += f" = {_currency(line.closing_income)}"
     components = line.total_components if line.label in {"Federal ordinary / short-term", "State"} else line.components

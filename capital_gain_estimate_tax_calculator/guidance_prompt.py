@@ -21,10 +21,10 @@ class TaxGuidancePromptBuilder:
             '{"breakdowns":[{"type":"federal_ordinary","brackets":[{"bracket":50000,"rate":0},{"bracket":null,"rate":15}]},'
             '{"type":"federal_long_term","brackets":[{"bracket":50000,"rate":0},{"bracket":null,"rate":15}]},'
             '{"type":"state","brackets":[{"bracket":50000,"rate":0},{"bracket":null,"rate":15}]}],'
-            f'"standard_deduction":{{"filing_status":"{assumptions.filing_status}","amount":15000}},'
+            f'"standard_deductions":{{"federal":{{"filing_status":"{assumptions.filing_status}","amount":15000}},"state":{{"filing_status":"{assumptions.filing_status}","amount":0}}}},'
             '"sources":[{"title":"IRS","url":"https://www.irs.gov"}]}. '
             "The type must be exactly federal_ordinary, federal_long_term, or state. "
-            "Include the standard_deduction object for the selected filing status; amount is the applicable U.S. dollar deduction. "
+            "Include federal and state standard_deductions for the selected filing status; each amount is the applicable U.S. dollar deduction. "
             "Use a breakdown for each applicable federal ordinary-income (short-term gain), federal long-term gain, and state treatment. "
             "In each bracket item, bracket is the upper taxable-income threshold in U.S. dollars and rate is the percentage."
         )

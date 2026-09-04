@@ -27,6 +27,8 @@ EDITABLE_CONFIG_KEYS = (
     "num_dependents",
     "state_residence",
     "other_ordinary_taxable_income",
+    "short_term_carryover_loss",
+    "long_term_carryover_loss",
 )
 
 
@@ -159,9 +161,15 @@ def tax_input_defaults(config_path: Path = LOCAL_CONFIG_PATH) -> tuple[str, str]
     )
 
 
+def carryover_loss_defaults(config_path: Path = LOCAL_CONFIG_PATH) -> tuple[str, str]:
+    """Return persisted short- and long-term capital-loss carryovers."""
+    config = _local_config(config_path)
+    return (str(config.get("short_term_carryover_loss", "0")), str(config.get("long_term_carryover_loss", "0")))
+
+
 def save_tax_input_defaults(values: dict[str, list[str]], config_path: Path = LOCAL_CONFIG_PATH) -> None:
     """Persist tax-profile inputs without exposing or replacing API credentials."""
-    profile_keys = {"state", "other_ordinary_taxable_income", "filing_status", "num_dependents", "ai_provider"}
+    profile_keys = {"state", "other_ordinary_taxable_income", "short_term_carryover_loss", "long_term_carryover_loss", "filing_status", "num_dependents", "ai_provider"}
     if not profile_keys.intersection(values):
         return
     state = values.get("state", [""])[0].strip().upper()
@@ -169,6 +177,8 @@ def save_tax_input_defaults(values: dict[str, list[str]], config_path: Path = LO
     config = _local_config(config_path)
     config["state_residence"] = state
     config["other_ordinary_taxable_income"] = income
+    config["short_term_carryover_loss"] = _non_negative_currency(values.get("short_term_carryover_loss", ["0"])[0])
+    config["long_term_carryover_loss"] = _non_negative_currency(values.get("long_term_carryover_loss", ["0"])[0])
     if "filing_status" in values:
         config["filing_status"] = values["filing_status"][0].strip()
     if "num_dependents" in values:

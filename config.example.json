@@ -10,5 +10,7 @@
   "filing_status": "head_of_household",
   "num_dependents": 2,
   "state_residence": "CA",
-  "other_ordinary_taxable_income": "0"
+  "other_ordinary_taxable_income": "0",
+  "short_term_carryover_loss": "0",
+  "long_term_carryover_loss": "0"
 }

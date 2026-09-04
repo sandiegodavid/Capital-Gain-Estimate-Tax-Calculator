@@ -51,6 +51,7 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
   let errors = [];
   let controller = null;
   let runId = 0;
+  let loadedSavedResponses = 0;
 
   const providerLabels = {
     openai: "ChatGPT / OpenAI API",
@@ -59,6 +60,7 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
   };
 
   const activeProviderLabel = () => providerLabels[provider?.value] || "AI";
+  const loadedSavedMessage = () => `Loaded ${loadedSavedResponses} saved response${loadedSavedResponses === 1 ? "" : "s"}. Get ${activeProviderLabel()} rate guidance can make up to ${attemptLimit} new request${attemptLimit === 1 ? "" : "s"}.`;
   const updateTaxContext = () => {
     const state = document.getElementById("state-residence")?.selectedOptions[0]?.textContent || "Not selected";
     const filingStatus = document.getElementById("filing-status")?.selectedOptions[0]?.textContent || "Not selected";
@@ -96,6 +98,7 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
     openButton.textContent = `Get ${activeProviderLabel()} rate guidance`;
     openButton.disabled = !hasState;
     updateTaxContext();
+    if (!processing && loadedSavedResponses) progress.textContent = loadedSavedMessage();
     if (!hasState) {
       progress.textContent = "Select a state on the dashboard before requesting AI rate guidance.";
     }
@@ -216,17 +219,16 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
       card.append(renderBreakdown(response, "federal_ordinary", "Federal ordinary income"));
       card.append(renderBreakdown(response, "federal_long_term", "Federal long-term gains"));
       card.append(renderBreakdown(response, "state", "State income tax"));
-      const deduction = response.standard_deduction || {};
-      const deductionLabel = element("label", `Standard deduction · ${String(deduction.filing_status || "").replaceAll("_", " ")}`, "deduction");
-      const deductionAmount = document.createElement("input");
-      deductionAmount.type = "number";
-      deductionAmount.min = "0";
-      deductionAmount.step = "1";
-      deductionAmount.value = deduction.amount ?? "";
-      deductionAmount.setAttribute("aria-label", `Response ${index + 1} standard deduction`);
-      deductionAmount.addEventListener("input", () => { deduction.amount = deductionAmount.value === "" ? "" : Number(deductionAmount.value); markManuallyUpdated(response); });
-      deductionLabel.append(deductionAmount);
-      card.append(deductionLabel);
+      const deductions = response.standard_deductions || {};
+      ["federal", "state"].forEach((kind) => {
+        const deduction = deductions[kind] || (deductions[kind] = { filing_status: "", amount: 0 });
+        const label = element("label", `${kind[0].toUpperCase() + kind.slice(1)} standard deduction · ${String(deduction.filing_status || "").replaceAll("_", " ")}`, "deduction");
+        const amount = document.createElement("input");
+        amount.type = "number"; amount.min = "0"; amount.step = "1"; amount.value = deduction.amount ?? "";
+        amount.setAttribute("aria-label", `Response ${index + 1} ${kind} standard deduction`);
+        amount.addEventListener("input", () => { deduction.amount = amount.value === "" ? "" : Number(amount.value); markManuallyUpdated(response); });
+        label.append(amount); card.append(label);
+      });
       const actions = element("div", undefined, "response-actions");
       const use = element("button", "Use", "use-response");
       const retry = element("button", "Discard & get new AI response", "discard-response");
@@ -247,7 +249,7 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
     for (let index = responses.length; index < 3; index += 1) {
       const placeholder = element("article", undefined, "guidance-response-card placeholder");
       placeholder.append(element("h3", `Response ${index + 1}`));
-      placeholder.append(element("p", processing ? "Waiting for a valid response…" : "No valid response available."));
+      placeholder.append(element("p", processing ? (loadedSavedResponses ? "Waiting for a new AI response…" : "Waiting for a valid response…") : "No valid response available."));
       grid.append(placeholder);
     }
   };
@@ -268,7 +270,9 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
     render();
     while (responses.length < 3 && attempts < attemptLimit && thisRun === runId) {
       attempts += 1;
-      progress.textContent = `Processing request ${attempts} of ${attemptLimit}. ${responses.length} valid response${responses.length === 1 ? "" : "s"} received. You can use, discard, or close this window while waiting.`;
+      progress.textContent = loadedSavedResponses
+        ? `Requesting new ${activeProviderLabel()} guidance ${attempts} of ${attemptLimit}. ${responses.length} response${responses.length === 1 ? "" : "s"} shown; the next valid response will appear in the open slot.`
+        : `Processing request ${attempts} of ${attemptLimit}. ${responses.length} valid response${responses.length === 1 ? "" : "s"} received. You can use, discard, or close this window while waiting.`;
       controller = new AbortController();
       try {
         const result = await post("/guidance-query", { attempt: String(attempts) }, controller.signal);
@@ -306,7 +310,8 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
       if (saved.responses.length) {
         responses = saved.responses.map((response, index) => ({ ...response, _metadata: saved.metadata?.[index] || {} }));
         attemptLimit = Math.max(0, 5 - saved.responses.length);
-        finish(`Loaded ${responses.length} saved response${responses.length === 1 ? "" : "s"}. Discard and retry can make up to ${attemptLimit} new request${attemptLimit === 1 ? "" : "s"}.`);
+        loadedSavedResponses = responses.length;
+        finish(loadedSavedMessage());
       } else {
         finish("No saved rate brackets are available. Choose an AI provider and request guidance.");
       }
@@ -348,10 +353,12 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
 
   openButton.addEventListener("click", async () => {
     abortQueries();
-    responses = [];
     attempts = 0;
-    attemptLimit = 5;
     errors = [];
+    if (!responses.length) {
+      attemptLimit = 5;
+      loadedSavedResponses = 0;
+    }
     await queryUntilComplete();
   });
   if (switchButton) switchButton.addEventListener("click", open);

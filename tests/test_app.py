@@ -564,7 +564,7 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertEqual(saved["breakdowns"][1]["brackets"][1]["rate"], 20.0)
         self.assertEqual(saved["standard_deduction"]["amount"], 18000.0)
 
-    def test_legacy_guidance_is_available_for_the_matching_provider_and_year(self) -> None:
+    def test_guidance_without_tax_profile_is_not_reused(self) -> None:
         response = self._valid_guidance_response()
         directory = self.root / "reports" / "ai-rate-guidance"
         directory.mkdir(parents=True)
@@ -578,9 +578,7 @@ class InvestmentGainAppTest(unittest.TestCase):
 
         selected = store.load_selected(self.root / "reports", 2026, profile)
 
-        self.assertIsNotNone(selected)
-        self.assertEqual(selected.path, legacy_path)
-        self.assertEqual(selected.profile, profile)
+        self.assertIsNone(selected)
         self.assertIsNone(store.load_selected(self.root / "reports", 2026, GuidanceProfile("CA", "single", 0, "gemini")))
 
     def test_guidance_validator_rejects_missing_standard_deduction(self) -> None:

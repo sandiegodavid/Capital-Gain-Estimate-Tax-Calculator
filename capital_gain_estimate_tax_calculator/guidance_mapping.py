@@ -96,20 +96,17 @@ def validate_guidance_response(response: GuidanceResponse, expected_filing_statu
     if missing:
         raise ReportError(f"Missing breakdown types: {', '.join(sorted(missing))}.")
 
-    deduction = response.get("standard_deduction")
-    if not isinstance(deduction, dict):
-        raise ReportError("The AI response did not include a standard_deduction object.")
-    filing_status = deduction.get("filing_status")
-    amount = _decimal(deduction.get("amount"))
-    if not isinstance(filing_status, str) or not filing_status.strip() or amount is None or amount < ZERO:
-        raise ReportError("The standard_deduction must include a filing_status and non-negative numeric amount.")
-    normalized_status = filing_status.strip().lower().replace(" ", "_")
-    if expected_filing_status and normalized_status != expected_filing_status:
-        raise ReportError(f"The standard deduction is for {normalized_status}, not the requested {expected_filing_status} filing status.")
+    deductions = response.get("standard_deductions")
+    if not isinstance(deductions, dict):
+        legacy = response.get("standard_deduction")
+        if not isinstance(legacy, dict):
+            raise ReportError("The AI response did not include federal and state standard deductions.")
+        deductions = {"federal": legacy, "state": legacy}
+    validated_deductions = {kind: _validated_deduction(deductions.get(kind), kind, expected_filing_status) for kind in ("federal", "state")}
 
     extracted: dict[str, object] = {
         "breakdowns": validated_breakdowns,
-        "standard_deduction": {"filing_status": normalized_status, "amount": float(amount)},
+        "standard_deductions": validated_deductions,
     }
     sources = response.get("sources")
     if isinstance(sources, list):
@@ -183,14 +180,28 @@ def allocate_taxable_income(
     )
 
 
-def standard_deduction_amount(response: GuidanceResponse) -> Decimal:
+def standard_deduction_amount(response: GuidanceResponse, jurisdiction: str = "federal") -> Decimal:
     """Return the validated standard deduction supplied by the selected response."""
-    deduction = response.get("standard_deduction")
+    deductions = response.get("standard_deductions")
+    deduction = deductions.get(jurisdiction) if isinstance(deductions, dict) else response.get("standard_deduction")
     amount = deduction.get("amount") if isinstance(deduction, dict) else None
     parsed = _decimal(amount)
     if parsed is None or parsed < ZERO:
         raise ReportError("The AI response did not include a valid standard deduction amount.")
     return parsed
+
+
+def _validated_deduction(value: object, jurisdiction: str, expected_filing_status: str | None) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise ReportError(f"The AI response did not include a {jurisdiction} standard deduction.")
+    filing_status = value.get("filing_status")
+    amount = _decimal(value.get("amount"))
+    if not isinstance(filing_status, str) or not filing_status.strip() or amount is None or amount < ZERO:
+        raise ReportError(f"The {jurisdiction} standard deduction must include a filing_status and non-negative amount.")
+    normalized_status = filing_status.strip().lower().replace(" ", "_")
+    if expected_filing_status and normalized_status != expected_filing_status:
+        raise ReportError(f"The {jurisdiction} standard deduction is for {normalized_status}, not the requested {expected_filing_status} filing status.")
+    return {"filing_status": normalized_status, "amount": float(amount)}
 
 
 def bracket_tax_components(

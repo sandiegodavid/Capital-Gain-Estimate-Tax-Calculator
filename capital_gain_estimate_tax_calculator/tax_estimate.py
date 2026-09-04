@@ -7,7 +7,7 @@ from decimal import Decimal, InvalidOperation
 
 from .guidance_mapping import BracketTaxComponent, GuidanceResponse, allocate_taxable_income, bracket_tax_components, standard_deduction_amount
 from .models import NormalizedReport, ZERO, totals
-from .settings import guidance_provider, tax_defaults, tax_input_defaults
+from .settings import carryover_loss_defaults, guidance_provider, tax_defaults, tax_input_defaults
 
 
 US_STATES = (
@@ -37,6 +37,8 @@ class TaxAssumptions:
     num_dependents: int = 0
     ai_provider: str = "openai"
     other_ordinary_taxable_income: Decimal = ZERO
+    short_term_carryover_loss: Decimal = ZERO
+    long_term_carryover_loss: Decimal = ZERO
 
 
 @dataclass(frozen=True)
@@ -53,6 +55,15 @@ class TaxEstimate:
     @property
     def total(self) -> Decimal:
         return self.federal + self.state
+
+
+@dataclass(frozen=True)
+class CarryoverApplication:
+    """Net capital gains and the ordinary-income offset from prior-year losses."""
+
+    short_term_gain: Decimal
+    long_term_gain: Decimal
+    ordinary_income_offset: Decimal
 
 
 @dataclass(frozen=True)
@@ -80,7 +91,8 @@ class TaxFormula:
     other_ordinary_income: Decimal
     short_term_gain: Decimal
     long_term_gain: Decimal
-    standard_deduction: Decimal
+    federal_standard_deduction: Decimal
+    state_standard_deduction: Decimal
     remaining_standard_deduction: Decimal
 
     @property
@@ -96,6 +108,7 @@ def assumptions_from_form(values: dict[str, list[str]]) -> TaxAssumptions:
     """Read household inputs and preserved mapped rates from a submitted form."""
     default_status, default_dependents = tax_defaults()
     default_state, default_income = tax_input_defaults()
+    default_short_carryover, default_long_carryover = carryover_loss_defaults()
     status = values.get("filing_status", [default_status])[0]
     try:
         dependents = max(0, int(values.get("num_dependents", [str(default_dependents)])[0]))
@@ -108,6 +121,8 @@ def assumptions_from_form(values: dict[str, list[str]]) -> TaxAssumptions:
         num_dependents=dependents,
         ai_provider=provider if provider in {"openai", "gemini", "openrouter"} else guidance_provider(),
         other_ordinary_taxable_income=_currency_amount(values.get("other_ordinary_taxable_income", [default_income])[0]),
+        short_term_carryover_loss=_currency_amount(values.get("short_term_carryover_loss", [default_short_carryover])[0]),
+        long_term_carryover_loss=_currency_amount(values.get("long_term_carryover_loss", [default_long_carryover])[0]),
     )
 
 
@@ -122,7 +137,7 @@ def estimate_taxes(
     values = totals(report.lots)
     short_term = max(values["short_term_gain_loss_usd"], ZERO)
     long_term = max(values["long_term_gain_loss_usd"], ZERO)
-    return build_tax_formula(guidance_response, assumptions.other_ordinary_taxable_income, short_term, long_term).estimate
+    return build_tax_formula(guidance_response, assumptions.other_ordinary_taxable_income, short_term, long_term, assumptions.short_term_carryover_loss, assumptions.long_term_carryover_loss, assumptions.filing_status).estimate
 
 
 def build_tax_formula(
@@ -130,10 +145,19 @@ def build_tax_formula(
     ordinary_income: Decimal,
     short_term_gain: Decimal,
     long_term_gain: Decimal,
+    short_carryover: Decimal = ZERO,
+    long_carryover: Decimal = ZERO,
+    filing_status: str = "single",
 ) -> TaxFormula:
     """Build the cumulative bracket calculations as each gain class stacks."""
-    deduction = standard_deduction_amount(guidance_response)
-    allocation = allocate_taxable_income(ordinary_income, short_term_gain, long_term_gain, deduction)
+    carryover = apply_carryover_losses(short_term_gain, long_term_gain, short_carryover, long_carryover, filing_status)
+    short_net = carryover.short_term_gain
+    long_net = carryover.long_term_gain
+    ordinary_income = max(ordinary_income - carryover.ordinary_income_offset, ZERO)
+    federal_deduction = standard_deduction_amount(guidance_response, "federal")
+    state_deduction = standard_deduction_amount(guidance_response, "state")
+    allocation = allocate_taxable_income(ordinary_income, short_net, long_net, federal_deduction)
+    state_allocation = allocate_taxable_income(ordinary_income, short_net, long_net, state_deduction)
     return TaxFormula(
         federal_short_term=TaxFormulaLine(
             "Federal ordinary / short-term",
@@ -151,17 +175,33 @@ def build_tax_formula(
         ),
         state=TaxFormulaLine(
             "State",
-            allocation.state_opening,
-            allocation.state_total,
-            bracket_tax_components(guidance_response, "state", allocation.state_opening, allocation.state_total),
-            bracket_tax_components(guidance_response, "state", ZERO, allocation.state_total),
+            state_allocation.state_opening,
+            state_allocation.state_total,
+            bracket_tax_components(guidance_response, "state", state_allocation.state_opening, state_allocation.state_total),
+            bracket_tax_components(guidance_response, "state", ZERO, state_allocation.state_total),
         ),
         other_ordinary_income=ordinary_income,
-        short_term_gain=short_term_gain,
-        long_term_gain=long_term_gain,
-        standard_deduction=deduction,
+        short_term_gain=short_net,
+        long_term_gain=long_net,
+        federal_standard_deduction=federal_deduction,
+        state_standard_deduction=state_deduction,
         remaining_standard_deduction=allocation.remaining_standard_deduction,
     )
+
+
+def apply_carryover_losses(
+    short_term_gain: Decimal,
+    long_term_gain: Decimal,
+    short_carryover: Decimal,
+    long_carryover: Decimal,
+    filing_status: str,
+) -> CarryoverApplication:
+    """Apply same-term losses, then cap any remaining ordinary-income offset."""
+    short_net = max(short_term_gain - short_carryover, ZERO)
+    long_net = max(long_term_gain - long_carryover, ZERO)
+    excess_loss = max(short_carryover - short_term_gain, ZERO) + max(long_carryover - long_term_gain, ZERO)
+    annual_limit = Decimal("1500") if filing_status == "married_filing_separately" else Decimal("3000")
+    return CarryoverApplication(short_net, long_net, min(excess_loss, annual_limit))
 def _currency_amount(value: str) -> Decimal:
     try:
         return max(ZERO, Decimal(value.replace(",", "").replace("$", "").strip() or "0"))
