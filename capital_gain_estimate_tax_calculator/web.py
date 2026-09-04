@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 
 from .models import Lot, NormalizedReport, ReportError, SourceSummary, totals
+from .normalizer import SCHWAB_SCHEMA
 from .dashboard_selection import DashboardSelection, SOURCE_FILE_FIELD, SOURCE_SELECTION_MARKER, selection_from_form
 from .dashboard_data import DashboardData, load_dashboard_data
 from .finder import choose_folder_in_finder, picker_start_folder
@@ -177,7 +178,12 @@ def _render_security_group(symbol: str, lots: list[Lot]) -> str:
 def _render_sources_section(report: NormalizedReport, selection: DashboardSelection) -> str:
     """Render persistent include/exclude controls for each recognized source file."""
     source_rows = "".join(_render_source_row(item, selection) for item in report.sources)
-    return f'''<style>.source-toggle{{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}}.source-toggle input{{appearance:auto;min-height:auto;width:16px;height:16px;margin:0;padding:0;accent-color:var(--gain)}}.sources td small{{display:block;margin:3px 0 0 24px;color:var(--muted);font-size:11px}}</style><section id="included-sources" class="panel sources"><div class="panel-heading"><h2>Included sources</h2><span>Use a toggle to include or exclude a source</span></div><table><thead><tr><th>Source</th><th>Records</th><th>Earliest sale</th><th>Latest sale</th></tr></thead><tbody>{source_rows}</tbody></table></section>'''
+    has_schwab = any(
+        item.source_name == SCHWAB_SCHEMA and selection.includes_source(item.source_file)
+        for item in report.sources
+    )
+    schwab_note = '''<aside class="source-note" role="note"><span aria-hidden="true">ℹ</span><div><strong>Charles Schwab source note</strong><p>Schwab exports do not include acquisition dates, so the closed date is shown as the acquisition-date placeholder. The populated long-term or short-term gain/loss column determines the tax term.</p></div></aside>''' if has_schwab else ""
+    return f'''<style>.source-toggle{{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}}.source-toggle input{{appearance:auto;min-height:auto;width:16px;height:16px;margin:0;padding:0;accent-color:var(--gain)}}.sources td small{{display:block;margin:3px 0 0 24px;color:var(--muted);font-size:11px}}.source-note{{display:flex;gap:10px;align-items:flex-start;margin:14px 18px 18px;padding:11px 13px;border:1px solid #bfd7ea;border-radius:8px;background:#f2f8fc;color:#315a78;font-size:13px}}.source-note>span{{font-size:16px;line-height:1.35}}.source-note strong{{display:block;color:var(--ink)}}.source-note p{{margin:2px 0 0;color:var(--muted)}}</style><section id="included-sources" class="panel sources"><div class="panel-heading"><h2>Included sources</h2><span>Use a toggle to include or exclude a source</span></div><table><thead><tr><th>Source</th><th>Records</th><th>Earliest sale</th><th>Latest sale</th></tr></thead><tbody>{source_rows}</tbody></table>{schwab_note}</section>'''
 
 
 def _render_tax_section(

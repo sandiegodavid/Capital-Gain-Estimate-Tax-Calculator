@@ -37,6 +37,14 @@ def parse_decimal(value: str | None) -> Decimal:
     return -parsed if is_negative else parsed
 
 
+def parse_optional_decimal(value: str | None) -> Decimal | None:
+    """Return a numeric CSV value, preserving whether the field was unavailable."""
+    text = (value or "").strip()
+    if not text or text in {"--", "—", "N/A"}:
+        return None
+    return parse_decimal(text)
+
+
 def parse_date(value: str | None):
     text = (value or "").strip()
     for pattern in ("%m/%d/%Y", "%Y-%m-%d", "%m/%d/%y"):
@@ -98,6 +106,7 @@ def _create_lot(
     long_term: Decimal,
     reported: Decimal,
     disallowed: Decimal,
+    tax_term: str | None = None,
 ) -> Lot:
     """Create the common domain model after a brokerage mapper extracts its fields."""
     return Lot(
@@ -110,7 +119,7 @@ def _create_lot(
         total_realized_gain_loss_usd=reported, disallowed_loss_usd=disallowed,
         economic_gain_loss_usd=proceeds - basis,
         return_pct=reported / basis if basis else ZERO,
-        tax_term=classify_tax_term(short_term, long_term, disallowed),
+        tax_term=tax_term or classify_tax_term(short_term, long_term, disallowed),
     )
 
 
@@ -214,8 +223,11 @@ def normalize_charles_schwab(path: Path, source_file: str) -> list[Lot]:
             sale_date = parse_date(row.get("Closed Date"))
             proceeds = parse_decimal(row.get("Proceeds"))
             basis = parse_decimal(row.get("Cost Basis (CB)"))
-            short_term = parse_decimal(row.get("Short Term (ST) Gain/Loss ($)"))
-            long_term = parse_decimal(row.get("Long Term (LT) Gain/Loss ($)"))
+            short_term_value = parse_optional_decimal(row.get("Short Term (ST) Gain/Loss ($)"))
+            long_term_value = parse_optional_decimal(row.get("Long Term (LT) Gain/Loss ($)"))
+            short_term = short_term_value if short_term_value is not None else ZERO
+            long_term = long_term_value if long_term_value is not None else ZERO
+            tax_term = _schwab_tax_term(short_term_value, long_term_value)
             reported = parse_decimal(row.get("Total Gain/Loss ($)"))
             disallowed = parse_decimal(row.get("Disallowed Loss"))
             symbol = (row.get("Symbol") or "N/A").strip()
@@ -227,9 +239,20 @@ def normalize_charles_schwab(path: Path, source_file: str) -> list[Lot]:
                 quantity=parse_decimal(row.get("Quantity")),
                 acquired_date=sale_date, sale_date=sale_date,
                 proceeds=proceeds, basis=basis, short_term=short_term, long_term=long_term,
-                reported=reported, disallowed=disallowed,
+                reported=reported, disallowed=disallowed, tax_term=tax_term,
             ))
     return lots
+
+
+def _schwab_tax_term(short_term: Decimal | None, long_term: Decimal | None) -> str | None:
+    """Use Schwab's populated gain/loss columns instead of inferring a holding period."""
+    if short_term is not None and long_term is not None:
+        return "Mixed"
+    if short_term is not None:
+        return "Short-Term"
+    if long_term is not None:
+        return "Long-Term"
+    return None
 
 
 def source_note(schema: str) -> str:

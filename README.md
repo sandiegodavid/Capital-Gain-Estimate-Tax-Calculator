@@ -6,13 +6,13 @@ A private, local web app for reviewing realized investment gains, creating an au
 
 ![Capital Gain Estimate Tax Calculator dashboard](<doc/screenshots/Screenshot 1.png>)
 
-### Estimated tax and payment actions
+### Estimated tax, carryovers, and payment actions
 
-![Estimated tax results, saved guidance, and payment actions](<doc/screenshots/Screenshot 4.png>)
+![Estimated tax inputs, carryover losses, results, and payment actions](<doc/screenshots/Screenshot 4.png>)
 
-### AI rate-guidance review
+### Rate bracket review
 
-![AI rate-guidance review with selectable bracket responses](<doc/screenshots/Screenshot 2.png>)
+![Rate bracket review with selectable responses, separate federal and state deductions, and provider controls](<doc/screenshots/Screenshot 2.png>)
 
 ### Exact tax formula
 
@@ -67,21 +67,23 @@ The workbook includes **Summary**, **Security Summary**, **Realized Lots**, **Ch
 - Fidelity CSV files with `Account`, `Symbol(CUSIP)`, `Short Term Gain/Loss`, and `Long Term Gain/Loss`.
 - Charles Schwab realized gain/loss CSV files, including exports with a report-title row before the headers. Required fields include `Symbol`, `Closed Date`, `Proceeds`, `Cost Basis (CB)`, and `Total Gain/Loss ($)`; the file name may also include `Schwab`.
 
-Charles Schwab's export does not provide acquisition dates. The workbook uses the closed date as an acquisition-date placeholder and calls this out in **Source Notes**. Its reported short-term, long-term, total gain/loss, and disallowed-loss fields are retained for reconciliation.
+Charles Schwab's export does not provide acquisition dates. The workbook uses the closed date as an acquisition-date placeholder and calls this out in **Source Notes**. A numeric `Long Term (LT) Gain/Loss ($)` value classifies a lot as long-term, while a numeric `Short Term (ST) Gain/Loss ($)` value classifies it as short-term; blank or dash values are not treated as a term classification. Its reported short-term, long-term, total gain/loss, and disallowed-loss fields are retained for reconciliation.
 
 Exact duplicate-looking rows are kept because they may be separate tax lots. Confirm final figures against brokerage documents.
 
 ## Estimated Tax and AI rate guidance
 
-The Estimated Tax section accepts state residence, filing status, number of dependents, and other ordinary taxable income. These selections are saved locally and restored when the dashboard opens.
+The Estimated Tax section accepts state residence, filing status, number of dependents, other ordinary taxable income, and separate short-term and long-term capital-loss carryovers. These selections are saved locally and restored when the dashboard opens. Supported filing statuses include single, head of household, married filing jointly, and married filing separately.
 
-Choose a state to activate rate guidance, then select one of the supported providers:
+Carryovers offset gains of the same term first. Any remaining net capital loss can reduce ordinary income up to the annual planning cap: $3,000 for single and married-filing-jointly filers, or $1,500 for married-filing-separately filers. The current estimate applies the same carryover treatment to state tax; state-specific rules may differ.
+
+Choose **Show rate brackets** to open the Rate bracket window. It loads saved responses matching the selected state, filing status, and number of dependents. Select an AI provider there to request new guidance or open that provider's settings:
 
 - ChatGPT / OpenAI API
 - Google Gemini API
 - OpenRouter API
 
-The review window requests up to five responses and stops after three valid ones, or clearly indicates when fewer valid responses are available. It presents separate federal ordinary, federal long-term, and state bracket tables. You can edit bracket limits, rates, and the standard deduction; add or remove brackets; use a response; discard a response and retry; or later review and switch saved responses. Edited responses are validated before they are saved.
+The Rate bracket window retains up to three valid saved responses for the selected tax profile and indicates when that maximum has been reached. It presents separate federal ordinary, federal long-term, and state bracket tables, plus distinct federal and state standard deductions. You can edit bracket limits, rates, and deductions; add or remove brackets; select a response; or discard a response and request a replacement. Edited responses are marked as manually updated and validated before they are saved.
 
 When you select **Use**, all valid reviewed responses are saved as YAML in:
 
@@ -89,7 +91,7 @@ When you select **Use**, all valid reviewed responses are saved as YAML in:
 reports/ai-rate-guidance/
 ```
 
-The selected response is marked clearly. The dashboard maps the approved brackets to your income level, estimates federal and state tax, and offers **See exact formula**. Federal short-term gain/loss is treated as ordinary income; the formula view explains standard-deduction and bracket calculations.
+The selected response is marked clearly. The dashboard maps its approved brackets to your income level, estimates federal and state tax, and offers **See exact formula**. Federal short-term gain/loss is treated as ordinary income; the formula view explains the separate deductions, carryover treatment, and bracket calculations.
 
 Official federal and supported state payment links come from `reference/income_tax_payment_websites.yaml`. Verify amounts, deadlines, and payment destinations before making a payment.
 
@@ -121,6 +123,6 @@ python3 -m unittest discover -s tests -v
 
 ## Important limitations
 
-This is a planning and review tool, not tax, legal, accounting, investment, or payment advice. It does not cover every tax rule, deduction, credit, surtax, carryover, or brokerage adjustment. Review imported data, guidance, calculations, and payment decisions with qualified professionals where appropriate.
+This is a planning and review tool, not tax, legal, accounting, investment, or payment advice. It does not cover every tax rule, deduction, credit, surtax, carryover, or brokerage adjustment. In particular, the current state carryover calculation is a planning assumption rather than a state-by-state tax-rule engine. Review imported data, guidance, calculations, and payment decisions with qualified professionals where appropriate.
 
 See the in-app [Terms of Service](http://127.0.0.1:8765/terms) for the complete disclaimer, no-warranty, and limitation-of-liability terms. Developed by DC Technology Consulting for open-source, free use.

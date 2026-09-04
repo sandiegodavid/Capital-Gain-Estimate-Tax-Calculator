@@ -34,7 +34,7 @@ from capital_gain_estimate_tax_calculator.guidance_store import GuidanceResponse
 from capital_gain_estimate_tax_calculator.guidance_profile import GuidanceProfile  # noqa: E402
 from capital_gain_estimate_tax_calculator.guidance_review import GuidanceReviewService  # noqa: E402
 from capital_gain_estimate_tax_calculator.tax_guidance import TaxGuidanceService  # noqa: E402
-from capital_gain_estimate_tax_calculator.web import InvestmentGainWebApp, _render_config_modal, _render_dashboard, _render_security_group, _render_tax_section  # noqa: E402
+from capital_gain_estimate_tax_calculator.web import InvestmentGainWebApp, _render_config_modal, _render_dashboard, _render_security_group, _render_sources_section, _render_tax_section  # noqa: E402
 
 
 CHASE_HEADERS = [
@@ -170,12 +170,40 @@ class InvestmentGainAppTest(unittest.TestCase):
         self.assertEqual(schwab_lot.disallowed_loss_usd, Decimal("50"))
         self.assertIn("Account / brokerage", _render_security_group("SCHW", [schwab_lot]))
         self.assertIn(">Charles Schwab</td>", _render_security_group("SCHW", [schwab_lot]))
+        source_section = _render_sources_section(
+            report,
+            DashboardSelection(self.source, self.root / "reports", 2026),
+        )
+        self.assertIn("Charles Schwab source note", source_section)
+        self.assertIn("closed date is shown as the acquisition-date placeholder", source_section)
 
     def test_schwab_headers_are_detected_without_a_brokerage_filename(self) -> None:
         path = self.source / "broker_export.csv"
         write_csv(path, SCHWAB_HEADERS, [])
 
         self.assertEqual(detect_schema(path), "Charles Schwab")
+
+    def test_schwab_mapper_uses_populated_gain_loss_columns_for_tax_term(self) -> None:
+        path = self.source / "Schwab_terms.csv"
+        write_csv(path, SCHWAB_HEADERS, [
+            [
+                "LT", "LONG TERM", "01/02/2026", "10", "$100.00", "FIFO",
+                "$1,000.00", "$900.00", "$100.00", "11.1%", "$100.00", "11.1%", "--", "--", "No", "--",
+            ],
+            [
+                "ST", "SHORT TERM", "01/03/2026", "10", "$100.00", "FIFO",
+                "$1,000.00", "$1,200.00", "($200.00)", "-16.7%", "--", "--", "($200.00)", "-16.7%", "No", "--",
+            ],
+        ])
+
+        lots = {lot.symbol: lot for lot in normalize_sources(self.source, 2026).lots}
+
+        self.assertEqual(lots["LT"].long_term_gain_loss_usd, Decimal("100"))
+        self.assertEqual(lots["LT"].short_term_gain_loss_usd, Decimal("0"))
+        self.assertEqual(lots["LT"].tax_term, "Long-Term")
+        self.assertEqual(lots["ST"].short_term_gain_loss_usd, Decimal("-200"))
+        self.assertEqual(lots["ST"].long_term_gain_loss_usd, Decimal("0"))
+        self.assertEqual(lots["ST"].tax_term, "Short-Term")
 
     def test_dashboard_load_request_renders_report_data(self) -> None:
         server = ThreadingHTTPServer(("127.0.0.1", 0), InvestmentGainWebApp().handler())
