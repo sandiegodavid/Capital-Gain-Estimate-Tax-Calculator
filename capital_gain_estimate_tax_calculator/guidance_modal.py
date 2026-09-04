@@ -60,7 +60,9 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
   };
 
   const activeProviderLabel = () => providerLabels[provider?.value] || "AI";
-  const loadedSavedMessage = () => `Loaded ${loadedSavedResponses} saved response${loadedSavedResponses === 1 ? "" : "s"}. Get ${activeProviderLabel()} rate guidance can make up to ${attemptLimit} new request${attemptLimit === 1 ? "" : "s"}.`;
+  const loadedSavedMessage = () => loadedSavedResponses >= 3
+    ? "Loaded 3 saved responses. The maximum of 3 valid responses has been reached."
+    : `Loaded ${loadedSavedResponses} saved response${loadedSavedResponses === 1 ? "" : "s"}. Get ${activeProviderLabel()} rate guidance can make up to ${attemptLimit} new request${attemptLimit === 1 ? "" : "s"}.`;
   const updateTaxContext = () => {
     const state = document.getElementById("state-residence")?.selectedOptions[0]?.textContent || "Not selected";
     const filingStatus = document.getElementById("filing-status")?.selectedOptions[0]?.textContent || "Not selected";
@@ -96,7 +98,7 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
         : "";
     }
     openButton.textContent = `Get ${activeProviderLabel()} rate guidance`;
-    openButton.disabled = !hasState;
+    openButton.disabled = !hasState || responses.length >= 3;
     updateTaxContext();
     if (!processing && loadedSavedResponses) progress.textContent = loadedSavedMessage();
     if (!hasState) {
@@ -286,7 +288,7 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
       render();
     }
     if (thisRun !== runId) return;
-    if (responses.length >= 3) finish("Three valid responses are ready. Choose one to use.");
+    if (responses.length >= 3) { syncProfileControls(); finish("Three valid responses are ready. Choose one to use."); }
     else finish(`Request round complete after ${attempts} attempt${attempts === 1 ? "" : "s"}. Choose from the ${responses.length} valid response${responses.length === 1 ? "" : "s"} available; no more responses will arrive.`);
   };
 
@@ -311,6 +313,7 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
         responses = saved.responses.map((response, index) => ({ ...response, _metadata: saved.metadata?.[index] || {} }));
         attemptLimit = Math.max(0, 5 - saved.responses.length);
         loadedSavedResponses = responses.length;
+        syncProfileControls();
         finish(loadedSavedMessage());
       } else {
         finish("No saved rate brackets are available. Choose an AI provider and request guidance.");
@@ -324,6 +327,8 @@ def render_guidance_modal(has_saved_responses: bool, guidance_controls: str) -> 
   const discard = async (index) => {
     abortQueries();
     responses.splice(index, 1);
+    loadedSavedResponses = responses.length;
+    syncProfileControls();
     if (attempts >= attemptLimit) {
       finish(`Request round complete after ${attempts} attempt${attempts === 1 ? "" : "s"}. The retry limit has been reached.`);
       return;
