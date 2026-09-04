@@ -1,3 +1,9 @@
+# Tax bracket retrieval
+
+- Investigate whether a suitable local-LLM RAG solution already exists for federal and state tax regulations, and evaluate its source quality, update process, licensing, and fit for this planning tool.
+- check Hugging Face
+- explore set up locally
+
 # State tax treatment follow-up
 
 The current planning formula applies the federal capital-loss carryover rule to state estimates.
