@@ -1,0 +1,78 @@
+saved_at: '2026-09-03T19:46:34-07:00'
+source_ai_provider: openrouter
+report_year: 2026
+tax_profile:
+  state_code: CA
+  filing_status: married_filing_jointly
+  num_dependents: 2
+  provider_id: openrouter
+selected: false
+manually_updated: false
+response:
+  breakdowns:
+  - type: federal_ordinary
+    brackets:
+    - bracket: 23850.0
+      rate: 10.0
+    - bracket: 96950.0
+      rate: 12.0
+    - bracket: 206700.0
+      rate: 22.0
+    - bracket: 394600.0
+      rate: 24.0
+    - bracket: 501050.0
+      rate: 32.0
+    - bracket: 751600.0
+      rate: 35.0
+    - bracket: null
+      rate: 37.0
+  - type: federal_long_term
+    brackets:
+    - bracket: 96700.0
+      rate: 0.0
+    - bracket: 600050.0
+      rate: 15.0
+    - bracket: null
+      rate: 20.0
+  - type: state
+    brackets:
+    - bracket: 20198.0
+      rate: 1.0
+    - bracket: 47884.0
+      rate: 2.0
+    - bracket: 75576.0
+      rate: 4.0
+    - bracket: 103270.0
+      rate: 6.0
+    - bracket: 134946.0
+      rate: 8.0
+    - bracket: 172628.0
+      rate: 9.3
+    - bracket: 344178.0
+      rate: 9.8
+    - bracket: 688358.0
+      rate: 10.3
+    - bracket: null
+      rate: 14.4
+  standard_deductions:
+    federal:
+      filing_status: married_filing_jointly
+      amount: 32300.0
+    state:
+      filing_status: married_filing_jointly
+      amount: 5546.0
+  sources:
+  - title: IRS - Revenue Procedure 2024-40 (2025 inflation adjustments; used for 2026
+      planning references)
+    url: https://www.irs.gov/irb/2024-40_IRB
+  - title: IRS - Topic 409 Capital Gains and Losses
+    url: https://www.irs.gov/taxtopics/tc409
+  - title: IRS - Publication 550 Investment Income and Expenses
+    url: https://www.irs.gov/publications/p550
+  - title: California Franchise Tax Board - 2025 Personal Income Tax Rates (used for
+      2026 planning references)
+    url: https://www.ftb.ca.gov/forms/2025/2025-540-taxtable.pdf
+  - title: California Franchise Tax Board - 2025 Form 540 Instructions
+    url: https://www.ftb.ca.gov/forms/2025/2025-540-instructions.html
+  - title: Franchise Tax Board - California Standard Deduction
+    url: https://www.ftb.ca.gov/forms/2025/2025-540.pdf

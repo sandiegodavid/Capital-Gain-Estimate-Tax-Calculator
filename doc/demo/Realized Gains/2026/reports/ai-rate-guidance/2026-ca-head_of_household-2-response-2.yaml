@@ -1,0 +1,73 @@
+saved_at: '2026-09-03T18:10:06-07:00'
+source_ai_provider: openrouter
+report_year: 2026
+tax_profile:
+  state_code: CA
+  filing_status: head_of_household
+  num_dependents: 2
+  provider_id: openrouter
+selected: false
+manually_updated: true
+response:
+  breakdowns:
+  - type: federal_ordinary
+    brackets:
+    - bracket: 11930.0
+      rate: 10.0
+    - bracket: 48475.0
+      rate: 12.0
+    - bracket: 103350.0
+      rate: 22.0
+    - bracket: 197300.0
+      rate: 24.0
+    - bracket: 250525.0
+      rate: 32.0
+    - bracket: 626350.0
+      rate: 35.0
+    - bracket: null
+      rate: 37.0
+  - type: federal_long_term
+    brackets:
+    - bracket: 96700.0
+      rate: 0.0
+    - bracket: 600050.0
+      rate: 15.0
+    - bracket: null
+      rate: 20.0
+  - type: state
+    brackets:
+    - bracket: 20912.0
+      rate: 1.1
+    - bracket: 41624.0
+      rate: 2.2
+    - bracket: 66704.0
+      rate: 4.4
+    - bracket: 76378.0
+      rate: 6.6
+    - bracket: 91654.0
+      rate: 8.8
+    - bracket: 1097292.0
+      rate: 10.75
+    - bracket: null
+      rate: 14.4
+  standard_deductions:
+    federal:
+      filing_status: head_of_household
+      amount: 15750.0
+    state:
+      filing_status: head_of_household
+      amount: 0.0
+  sources:
+  - title: IRS - Publication550 (Investment Income and Expenses)
+    url: https://www.irs.gov/publications/p550
+  - title: IRS - Topic No. 409 Capital Gains and Losses
+    url: https://www.irs.gov/taxtopics/tc409
+  - title: IRS - Revenue Procedure 2024-40 (2025 inflation adjustments;2024 Rev. Proc.
+      2023-34 applies for amounts referenced)
+    url: https://www.irs.gov/irb/2024-33_IRB#RP-2024-40
+  - title: Franchise Tax Board - California 2025 Personal Income Tax Rates (planning
+      reference for 2026)
+    url: https://www.ftb.ca.gov/forms/2025/2025-540-booklet.html
+  - title: California Department of Tax and Fee Administration - Sales and Use Tax
+      Rates (referenced for completeness)
+    url: https://www.cdtfa.ca.gov/taxes-and-fees/sales-use-tax-rates.htm
