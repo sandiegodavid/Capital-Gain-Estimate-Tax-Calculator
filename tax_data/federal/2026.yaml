@@ -1,0 +1,180 @@
+# Federal income-tax reference data for tax year 2026.
+#
+# This is planning data, not a complete tax-return calculation engine. In
+# particular, credits require eligibility, MAGI, earned-income, and tax-liability
+# calculations that are outside this file.
+tax_year: 2026
+jurisdiction: federal
+currency: USD
+
+sources:
+  ordinary_income_brackets:
+    title: "Revenue Procedure 2025-32, 2026 Tax Rate Tables"
+    url: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf"
+  long_term_capital_gains:
+    title: "Revenue Procedure 2025-32, Maximum Capital Gains Rate"
+    url: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf"
+  standard_deduction:
+    title: "Revenue Procedure 2025-32, Standard Deduction"
+    url: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf"
+  child_and_other_dependent_credits:
+    title: "Child Tax Credit"
+    url: "https://www.irs.gov/credits-deductions/individuals/child-tax-credit"
+  earned_income_tax_credit:
+    title: "Revenue Procedure 2025-32, Earned Income Credit"
+    url: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf"
+  release_summary:
+    title: "IRS releases tax inflation adjustments for tax year 2026"
+    url: "https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill"
+
+standard_deduction:
+  # Base amount before the special rules below.
+  single: 16100
+  married_filing_jointly: 32200
+  married_filing_separately: 16100
+  head_of_household: 24150
+  qualifying_surviving_spouse: 32200
+
+  # Apply only when the taxpayer can be claimed as another taxpayer's dependent.
+  claimed_as_dependent:
+    minimum: 1350
+    earned_income_addition: 450
+    maximum: filing_status_standard_deduction
+
+  # Per age-65-or-blind qualification. A person who is both is counted twice.
+  additional_65_or_blind:
+    unmarried_not_qualifying_surviving_spouse: 2050
+    married_or_qualifying_surviving_spouse: 1650
+
+brackets:
+  # Short-term capital gains are taxed as ordinary income.
+  ordinary:
+    single:
+      - {bracket: 12400, rate: 10}
+      - {bracket: 50400, rate: 12}
+      - {bracket: 105700, rate: 22}
+      - {bracket: 201775, rate: 24}
+      - {bracket: 256225, rate: 32}
+      - {bracket: 640600, rate: 35}
+      - {bracket: null, rate: 37}
+    married_filing_jointly:
+      - {bracket: 24800, rate: 10}
+      - {bracket: 100800, rate: 12}
+      - {bracket: 211400, rate: 22}
+      - {bracket: 403550, rate: 24}
+      - {bracket: 512450, rate: 32}
+      - {bracket: 768700, rate: 35}
+      - {bracket: null, rate: 37}
+    married_filing_separately:
+      - {bracket: 12400, rate: 10}
+      - {bracket: 50400, rate: 12}
+      - {bracket: 105700, rate: 22}
+      - {bracket: 201775, rate: 24}
+      - {bracket: 256225, rate: 32}
+      - {bracket: 384350, rate: 35}
+      - {bracket: null, rate: 37}
+    head_of_household:
+      - {bracket: 17700, rate: 10}
+      - {bracket: 67450, rate: 12}
+      - {bracket: 105700, rate: 22}
+      - {bracket: 201750, rate: 24}
+      - {bracket: 256200, rate: 32}
+      - {bracket: 640600, rate: 35}
+      - {bracket: null, rate: 37}
+    qualifying_surviving_spouse:
+      - {bracket: 24800, rate: 10}
+      - {bracket: 100800, rate: 12}
+      - {bracket: 211400, rate: 22}
+      - {bracket: 403550, rate: 24}
+      - {bracket: 512450, rate: 32}
+      - {bracket: 768700, rate: 35}
+      - {bracket: null, rate: 37}
+
+  # For net long-term capital gains and qualified dividends only. Do not apply
+  # these simplified rates to collectibles, unrecaptured section 1250 gain, or
+  # section 1202 gain subject to special rates.
+  long_term:
+    single:
+      - {bracket: 49450, rate: 0}
+      - {bracket: 545500, rate: 15}
+      - {bracket: null, rate: 20}
+    married_filing_jointly:
+      - {bracket: 98900, rate: 0}
+      - {bracket: 613700, rate: 15}
+      - {bracket: null, rate: 20}
+    married_filing_separately:
+      - {bracket: 49450, rate: 0}
+      - {bracket: 306850, rate: 15}
+      - {bracket: null, rate: 20}
+    head_of_household:
+      - {bracket: 66200, rate: 0}
+      - {bracket: 579600, rate: 15}
+      - {bracket: null, rate: 20}
+    qualifying_surviving_spouse:
+      - {bracket: 98900, rate: 0}
+      - {bracket: 613700, rate: 15}
+      - {bracket: null, rate: 20}
+
+credits:
+  # These three credits are dependent-related. They must not be calculated from
+  # a dependency count alone; each claimed person must satisfy the IRS tests.
+  child_tax_credit:
+    maximum_per_qualifying_child: 2200
+    nonrefundable: true
+    qualifying_child_age_at_year_end: under_17
+    phaseout:
+      modified_agi_threshold:
+        married_filing_jointly: 400000
+        all_other_filing_statuses: 200000
+      reduction_per_1000_or_fraction: 50
+  additional_child_tax_credit:
+    maximum_refundable_per_qualifying_child: 1700
+    earned_income_threshold: 2500
+    earned_income_rate_percent: 15
+    unavailable_if_filing_form_2555: true
+  credit_for_other_dependents:
+    maximum_per_qualifying_dependent: 500
+    nonrefundable: true
+    # Uses the CTC/ODC combined phaseout rule above.
+    phaseout: child_tax_credit.phaseout
+
+  # An MFS filer may use the all-other-status limits only when the special IRS
+  # rules for separated spouses are met. A full EITC calculation must apply the
+  # IRS eligibility tests and phase-in/phase-out worksheets.
+  earned_income_tax_credit:
+    investment_income_maximum: 12200
+    maximum_credit:
+      qualifying_children_0: 664
+      qualifying_children_1: 4427
+      qualifying_children_2: 7316
+      qualifying_children_3_or_more: 8231
+    maximum_agi:
+      single:
+        qualifying_children_0: 19540
+        qualifying_children_1: 51593
+        qualifying_children_2: 58629
+        qualifying_children_3_or_more: 62974
+      married_filing_jointly:
+        qualifying_children_0: 26820
+        qualifying_children_1: 58863
+        qualifying_children_2: 65899
+        qualifying_children_3_or_more: 70244
+      married_filing_separately:
+        qualifying_children_0: 19540
+        qualifying_children_1: 51593
+        qualifying_children_2: 58629
+        qualifying_children_3_or_more: 62974
+      head_of_household:
+        qualifying_children_0: 19540
+        qualifying_children_1: 51593
+        qualifying_children_2: 58629
+        qualifying_children_3_or_more: 62974
+      qualifying_surviving_spouse:
+        qualifying_children_0: 19540
+        qualifying_children_1: 51593
+        qualifying_children_2: 58629
+        qualifying_children_3_or_more: 62974
+
+# Validate against current official IRS instructions before using this data for
+# a return. It intentionally excludes NIIT, AMT, special capital-gain rates,
+# itemized deductions, and other credits.
