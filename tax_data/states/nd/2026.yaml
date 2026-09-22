@@ -1,0 +1,33 @@
+tax_year: 2026
+jurisdiction: North Dakota
+abbreviation: ND
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "2026 North Dakota Form ND-1ES", url: "https://www.tax.nd.gov/sites/www/files/documents/forms/individual/2025-iit/28709-form-nd-1es-2026.pdf"}
+  capital_gains: {title: "North Dakota individual income-tax instructions", url: "https://www.tax.nd.gov/sites/www/files/documents/forms/software-developer/individual-income-forms/2025-iit-instructions.pdf"}
+  payment: {title: "North Dakota Taxpayer Access Point", url: "https://tap.tax.nd.gov/"}
+tax_base: {starting_point: federal_taxable_income_with_north_dakota_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: federal_in_tax_base
+  calculation_supported: true
+  single: 16100
+  married_filing_jointly: 32200
+  married_filing_separately: 16100
+  head_of_household: 24150
+  qualifying_surviving_spouse: 32200
+brackets:
+  ordinary:
+    single: [{bracket: 49575, rate: 0}, {bracket: 250400, rate: 1.95}, {bracket: null, rate: 2.5}]
+    married_filing_jointly: &joint [{bracket: 82800, rate: 0}, {bracket: 304850, rate: 1.95}, {bracket: null, rate: 2.5}]
+    married_filing_separately: [{bracket: 41400, rate: 0}, {bracket: 152425, rate: 1.95}, {bracket: null, rate: 2.5}]
+    head_of_household: [{bracket: 66400, rate: 0}, {bracket: 277600, rate: 1.95}, {bracket: null, rate: 2.5}]
+    qualifying_surviving_spouse: *joint
+capital_gains:
+  treatment: percentage_exclusion_then_ordinary_schedule
+  exclusion_percent: 40
+  calculation_supported: true
+  note: "The exclusion applies to eligible federal net long-term capital gain; gains already removed elsewhere are not eligible."
+dependent_benefits: []
+other_credits: []

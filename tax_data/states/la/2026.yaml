@@ -1,0 +1,34 @@
+tax_year: 2026
+jurisdiction: Louisiana
+abbreviation: LA
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "2026 Louisiana Form IT-540ES instructions", url: "https://dam.ldr.la.gov/taxforms/IT540ESi-2026.pdf"}
+  capital_gains: {title: "Louisiana income-tax reform FAQ", url: "https://revenue.louisiana.gov/tax-education-and-faqs/faqs/income-tax-reform/can-i-claim-the-net-capital-gains-deduction-for-sales-occurring-on-or-after-january-1-2025/"}
+  payment: {title: "Louisiana file and pay", url: "https://revenue.louisiana.gov/file-pay-online/"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_louisiana_modifications, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 12875
+  married_filing_jointly: 25750
+  married_filing_separately: 12875
+  head_of_household: 25750
+  qualifying_surviving_spouse: 25750
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 3}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains:
+  treatment: ordinary_schedule_with_conditional_deduction
+  calculation_supported: false
+  note: "General investment gains use the 3% rate; the net capital-gains deduction applies only to qualifying sales described by Louisiana law."
+dependent_benefits: []
+other_credits: []
+calculation_notes:
+  - "The pre-2025 $1,000 dependent, age, and blindness deductions were repealed by the flat-tax reform."

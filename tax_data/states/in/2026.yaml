@@ -1,0 +1,28 @@
+tax_year: 2026
+jurisdiction: Indiana
+abbreviation: IN
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rate: {title: "Indiana tax rates", url: "https://www.in.gov/dor/resources/tax-rates-and-reports/rates-fees-and-penalties/"}
+  exemptions: {title: "Indiana exemptions for individuals", url: "https://www.in.gov/dor/i-am-a/individual/low-income-taxpayers/"}
+  payment: {title: "Indiana tax payment", url: "https://www.in.gov/dor/i-need-to/make-a-payment/index.html"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_indiana_modifications, local_income_taxes_included: false}
+standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 2.95}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: regular_dependent_exemption, type: deduction, amount_per_dependent: 1000}
+  - {name: qualifying_dependent_child_additional_exemption, type: deduction, amount_per_child: 1500, first_year_claim_amount: 3000}
+  - {name: qualifying_adopted_child_additional_exemption, type: deduction, amount_per_child: 3000}
+other_credits:
+  - {name: state_earned_income_tax_credit, type: federal_percentage, eligibility_tests_required: true}
+calculation_notes:
+  - "County income tax is excluded and must be modeled separately."

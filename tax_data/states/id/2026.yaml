@@ -1,0 +1,38 @@
+tax_year: 2026
+jurisdiction: Idaho
+abbreviation: ID
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status:
+  status: provisional
+  checked_on: "2026-09-21"
+  unresolved_fields: [zero_rate_thresholds]
+  note: "The latest published return schedule is tax year 2025; the 2026 final return instructions are not yet available."
+sources:
+  rates: {title: "Idaho individual income-tax rate schedule", url: "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/"}
+  2026_changes: {title: "Idaho withholding tables updated for 2026", url: "https://tax.idaho.gov/pressrelease/withholding-tables-updated-for-2026/"}
+  payment: {title: "Idaho e-pay", url: "https://tax.idaho.gov/online-services/e-pay/"}
+tax_base: {starting_point: federal_taxable_income_with_idaho_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: federal_in_tax_base
+  calculation_supported: true
+  single: 16100
+  married_filing_jointly: 32200
+  married_filing_separately: 16100
+  head_of_household: 24150
+  qualifying_surviving_spouse: 32200
+brackets:
+  ordinary:
+    single: &single [{bracket: 4811, rate: 0}, {bracket: null, rate: 5.3}]
+    married_filing_jointly: &joint [{bracket: 9622, rate: 0}, {bracket: null, rate: 5.3}]
+    married_filing_separately: *single
+    head_of_household: *joint
+    qualifying_surviving_spouse: *joint
+capital_gains:
+  treatment: ordinary_schedule_with_conditional_deduction
+  calculation_supported: false
+  note: "Qualifying Idaho property may receive the Idaho capital-gains deduction; asset and holding-period tests apply."
+dependent_benefits: []
+other_credits: []
+calculation_notes:
+  - "The Idaho child tax credit expired before 2026; do not carry it forward."

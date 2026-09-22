@@ -1,0 +1,30 @@
+tax_year: 2026
+jurisdiction: North Carolina
+abbreviation: NC
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "North Carolina individual estimated income tax", url: "https://www.ncdor.gov/individual-estimated-income-tax/open"}
+  child_deduction: {title: "North Carolina individual tax-law changes", url: "https://www.ncdor.gov/2021-tax-law-changes/open"}
+  payment: {title: "North Carolina file and pay", url: "https://www.ncdor.gov/file-pay/file-pay-individuals"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_north_carolina_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 12750
+  married_filing_jointly: 25500
+  married_filing_separately: 12750
+  head_of_household: 19125
+  qualifying_surviving_spouse: 25500
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 3.99}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: child_deduction, type: deduction, maximum_per_qualifying_child: 3000, amount_varies_by_federal_agi_and_status: true, calculation_supported: false}
+other_credits: []

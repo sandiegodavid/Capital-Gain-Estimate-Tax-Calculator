@@ -1,0 +1,32 @@
+tax_year: 2026
+jurisdiction: Virginia
+abbreviation: VA
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Virginia new tax laws", url: "https://www.tax.virginia.gov/news/new-virginia-tax-laws"}
+  forms: {title: "Virginia early-release forms", url: "https://www.tax.virginia.gov/early-release-forms"}
+  payment: {title: "Virginia tax payments", url: "https://www.tax.virginia.gov/payments"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_virginia_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 8750
+  married_filing_jointly: 17500
+  married_filing_separately: 8750
+  head_of_household: 8750
+  qualifying_surviving_spouse: 17500
+brackets:
+  ordinary:
+    single: &all [{bracket: 3000, rate: 2}, {bracket: 5000, rate: 3}, {bracket: 17000, rate: 5}, {bracket: null, rate: 5.75}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: dependent_exemption, type: deduction, amount_per_dependent: 930}
+other_credits: []
+calculation_notes:
+  - "Taxpayer/spouse exemption is $930 each; age-65-or-blind exemption is $800 per qualification."

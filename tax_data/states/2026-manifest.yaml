@@ -1,0 +1,50 @@
+tax_year: 2026
+checked_on: "2026-09-21"
+coverage:
+  broad_individual_income_tax_states: 41
+  capital_gains_excise_only_states: 1
+  total_files: 42
+status_counts: {final: 29, provisional: 13}
+states:
+  - {abbreviation: AL, jurisdiction: "Alabama", status: provisional, path: "tax_data/states/al/2026.yaml"}
+  - {abbreviation: AR, jurisdiction: "Arkansas", status: final, path: "tax_data/states/ar/2026.yaml"}
+  - {abbreviation: AZ, jurisdiction: "Arizona", status: provisional, path: "tax_data/states/az/2026.yaml"}
+  - {abbreviation: CA, jurisdiction: "California", status: provisional, path: "tax_data/states/ca/2026.yaml"}
+  - {abbreviation: CO, jurisdiction: "Colorado", status: provisional, path: "tax_data/states/co/2026.yaml"}
+  - {abbreviation: CT, jurisdiction: "Connecticut", status: final, path: "tax_data/states/ct/2026.yaml"}
+  - {abbreviation: DE, jurisdiction: "Delaware", status: final, path: "tax_data/states/de/2026.yaml"}
+  - {abbreviation: GA, jurisdiction: "Georgia", status: final, path: "tax_data/states/ga/2026.yaml"}
+  - {abbreviation: HI, jurisdiction: "Hawaii", status: final, path: "tax_data/states/hi/2026.yaml"}
+  - {abbreviation: IA, jurisdiction: "Iowa", status: final, path: "tax_data/states/ia/2026.yaml"}
+  - {abbreviation: ID, jurisdiction: "Idaho", status: provisional, path: "tax_data/states/id/2026.yaml"}
+  - {abbreviation: IL, jurisdiction: "Illinois", status: final, path: "tax_data/states/il/2026.yaml"}
+  - {abbreviation: IN, jurisdiction: "Indiana", status: final, path: "tax_data/states/in/2026.yaml"}
+  - {abbreviation: KS, jurisdiction: "Kansas", status: final, path: "tax_data/states/ks/2026.yaml"}
+  - {abbreviation: KY, jurisdiction: "Kentucky", status: final, path: "tax_data/states/ky/2026.yaml"}
+  - {abbreviation: LA, jurisdiction: "Louisiana", status: final, path: "tax_data/states/la/2026.yaml"}
+  - {abbreviation: MA, jurisdiction: "Massachusetts", status: final, path: "tax_data/states/ma/2026.yaml"}
+  - {abbreviation: MD, jurisdiction: "Maryland", status: final, path: "tax_data/states/md/2026.yaml"}
+  - {abbreviation: ME, jurisdiction: "Maine", status: provisional, path: "tax_data/states/me/2026.yaml"}
+  - {abbreviation: MI, jurisdiction: "Michigan", status: provisional, path: "tax_data/states/mi/2026.yaml"}
+  - {abbreviation: MN, jurisdiction: "Minnesota", status: final, path: "tax_data/states/mn/2026.yaml"}
+  - {abbreviation: MO, jurisdiction: "Missouri", status: final, path: "tax_data/states/mo/2026.yaml"}
+  - {abbreviation: MS, jurisdiction: "Mississippi", status: final, path: "tax_data/states/ms/2026.yaml"}
+  - {abbreviation: MT, jurisdiction: "Montana", status: final, path: "tax_data/states/mt/2026.yaml"}
+  - {abbreviation: NC, jurisdiction: "North Carolina", status: final, path: "tax_data/states/nc/2026.yaml"}
+  - {abbreviation: ND, jurisdiction: "North Dakota", status: final, path: "tax_data/states/nd/2026.yaml"}
+  - {abbreviation: NE, jurisdiction: "Nebraska", status: final, path: "tax_data/states/ne/2026.yaml"}
+  - {abbreviation: NJ, jurisdiction: "New Jersey", status: final, path: "tax_data/states/nj/2026.yaml"}
+  - {abbreviation: NM, jurisdiction: "New Mexico", status: final, path: "tax_data/states/nm/2026.yaml"}
+  - {abbreviation: NY, jurisdiction: "New York", status: final, path: "tax_data/states/ny/2026.yaml"}
+  - {abbreviation: OH, jurisdiction: "Ohio", status: provisional, path: "tax_data/states/oh/2026.yaml"}
+  - {abbreviation: OK, jurisdiction: "Oklahoma", status: final, path: "tax_data/states/ok/2026.yaml"}
+  - {abbreviation: OR, jurisdiction: "Oregon", status: provisional, path: "tax_data/states/or/2026.yaml"}
+  - {abbreviation: PA, jurisdiction: "Pennsylvania", status: final, path: "tax_data/states/pa/2026.yaml"}
+  - {abbreviation: RI, jurisdiction: "Rhode Island", status: final, path: "tax_data/states/ri/2026.yaml"}
+  - {abbreviation: SC, jurisdiction: "South Carolina", status: provisional, path: "tax_data/states/sc/2026.yaml"}
+  - {abbreviation: UT, jurisdiction: "Utah", status: provisional, path: "tax_data/states/ut/2026.yaml"}
+  - {abbreviation: VA, jurisdiction: "Virginia", status: final, path: "tax_data/states/va/2026.yaml"}
+  - {abbreviation: VT, jurisdiction: "Vermont", status: provisional, path: "tax_data/states/vt/2026.yaml"}
+  - {abbreviation: WA, jurisdiction: "Washington", status: provisional, path: "tax_data/states/wa/2026.yaml"}
+  - {abbreviation: WI, jurisdiction: "Wisconsin", status: final, path: "tax_data/states/wi/2026.yaml"}
+  - {abbreviation: WV, jurisdiction: "West Virginia", status: final, path: "tax_data/states/wv/2026.yaml"}

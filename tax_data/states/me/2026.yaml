@@ -1,0 +1,45 @@
+tax_year: 2026
+jurisdiction: Maine
+abbreviation: ME
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status:
+  status: provisional
+  checked_on: "2026-09-21"
+  unresolved_fields: [inflation_adjusted_dependent_credit]
+  note: "Rates, deductions, and surcharge are final; the base dependent credit is stated because the final inflation-adjusted worksheet amount was not separately published in the cited guidance."
+sources:
+  rates: {title: "2026 Maine individual income-tax rates", url: "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/2026-05/ind_tax_rate_sched_2026_rev.pdf"}
+  dependent_credit: {title: "Maine dependent exemption tax credit", url: "https://www.maine.gov/revenue/taxes/tax-relief-credits-programs/income-tax-credits/dependent-exemption-tax-credit"}
+  2026_changes: {title: "Maine 2026 tax-law changes", url: "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/legischange26.pdf"}
+  payment: {title: "Maine Tax Portal", url: "https://revenue.maine.gov/"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_maine_modifications, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed_with_phaseout
+  calculation_supported: false
+  single: 15700
+  married_filing_jointly: 31400
+  married_filing_separately: 15700
+  head_of_household: 23550
+  qualifying_surviving_spouse: 31400
+  additional_65_or_blind: {unmarried: 2050, married_or_qualifying_surviving_spouse: 1650}
+brackets:
+  ordinary:
+    single: &single [{bracket: 27400, rate: 5.8}, {bracket: 64850, rate: 6.75}, {bracket: null, rate: 7.15}]
+    married_filing_jointly: &joint [{bracket: 54850, rate: 5.8}, {bracket: 129750, rate: 6.75}, {bracket: null, rate: 7.15}]
+    married_filing_separately: *single
+    head_of_household: &hoh [{bracket: 41100, rate: 5.8}, {bracket: 97300, rate: 6.75}, {bracket: null, rate: 7.15}]
+    qualifying_surviving_spouse: *joint
+  surcharge:
+    single: [{bracket: 1000000, rate: 0}, {bracket: null, rate: 2}]
+    married_filing_jointly: &surcharge_joint [{bracket: 1500000, rate: 0}, {bracket: null, rate: 2}]
+    married_filing_separately: [{bracket: 750000, rate: 0}, {bracket: null, rate: 2}]
+    head_of_household: *surcharge_joint
+    qualifying_surviving_spouse: *surcharge_joint
+capital_gains: {treatment: ordinary_schedule_plus_income_surcharge, calculation_supported: true}
+dependent_benefits:
+  - {name: dependent_exemption_tax_credit, type: refundable_credit_for_residents, statutory_base_per_dependent: 300, inflation_adjusted_amount: null, phaseout_applies: true}
+other_credits: []
+calculation_notes:
+  - "Personal exemption is $5,300 for the taxpayer and eligible spouse; it is not a per-dependent exemption."
+  - "The standard deduction and personal exemption phase out at higher Maine income."

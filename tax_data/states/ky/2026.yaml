@@ -1,0 +1,31 @@
+tax_year: 2026
+jurisdiction: Kentucky
+abbreviation: KY
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Kentucky announces 2026 standard deduction", url: "https://revenue.ky.gov/News/Pages/Kentucky-DOR-Announces-2026-Standard-Deduction.aspx"}
+  payment: {title: "Kentucky e-file payment options", url: "https://revenue.ky.gov/Collections/Pages/E-file-Payment-Options.aspx"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_kentucky_modifications, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed_per_return
+  calculation_supported: true
+  single: 3360
+  married_filing_jointly: 3360
+  married_filing_separately: 3360
+  head_of_household: 3360
+  qualifying_surviving_spouse: 3360
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 3.5}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits: []
+other_credits:
+  - {name: family_size_tax_credit, type: income_based_credit, calculation_supported: false}
+calculation_notes:
+  - "Local occupational taxes are excluded."

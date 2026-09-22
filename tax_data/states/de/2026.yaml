@@ -1,0 +1,30 @@
+tax_year: 2026
+jurisdiction: Delaware
+abbreviation: DE
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Delaware personal income-tax forms and instructions", url: "https://revenue.delaware.gov/personal-income-tax-forms/personal-income-tax-forms-instructions/"}
+  payment: {title: "Delaware tax payment", url: "https://revenue.delaware.gov/payment/"}
+tax_base: {starting_point: delaware_adjusted_gross_income, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 3250
+  married_filing_jointly: 6500
+  married_filing_separately: 3250
+  head_of_household: 3250
+  qualifying_surviving_spouse: 6500
+brackets:
+  ordinary:
+    single: &all [{bracket: 2000, rate: 0}, {bracket: 5000, rate: 2.2}, {bracket: 10000, rate: 3.9}, {bracket: 20000, rate: 4.8}, {bracket: 25000, rate: 5.2}, {bracket: 60000, rate: 5.55}, {bracket: null, rate: 6.6}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: dependent_personal_credit, type: nonrefundable_credit, amount_per_dependent: 110}
+other_credits:
+  - {name: personal_credit, type: nonrefundable_credit, amount_per_person: 110}

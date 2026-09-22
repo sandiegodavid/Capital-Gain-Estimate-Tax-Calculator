@@ -1,0 +1,36 @@
+tax_year: 2026
+jurisdiction: Missouri
+abbreviation: MO
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rates: {title: "2026 Missouri Form MO-1040ES", url: "https://dor.mo.gov/forms/MO-1040ES_2026.pdf"}
+  capital_gains: {title: "Missouri capital-gains subtraction FAQ", url: "https://dor.mo.gov/faq/taxation/individual/capital-gains-subtraction.html"}
+  payment: {title: "Missouri individual tax payment", url: "https://dor.mo.gov/taxation/individual/pay-online.html"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_missouri_modifications, local_income_taxes_included: false}
+standard_deduction:
+  type: federal_deduction_allowed_in_state_calculation
+  calculation_supported: true
+  single: 16100
+  married_filing_jointly: 32200
+  married_filing_separately: 16100
+  head_of_household: 25550
+  qualifying_surviving_spouse: 33600
+  note: "Missouri adds $1,400 to the federal amount for HOH and qualifying surviving spouse."
+brackets:
+  ordinary:
+    single: &all [{bracket: 1348, rate: 0}, {bracket: 2696, rate: 2}, {bracket: 4044, rate: 2.5}, {bracket: 5392, rate: 3}, {bracket: 6740, rate: 3.5}, {bracket: 8088, rate: 4}, {bracket: 9436, rate: 4.5}, {bracket: null, rate: 4.7}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains:
+  treatment: full_subtraction
+  exclusion_percent: 100
+  calculation_supported: true
+  note: "Eligible individuals subtract 100% of federally reported capital gains beginning with tax year 2026; capital losses do not create a subtraction."
+dependent_benefits: []
+other_credits: []
+calculation_notes:
+  - "Missouri joint returns can require separate spouse tax computations; the marginal schedule alone does not encode that allocation."

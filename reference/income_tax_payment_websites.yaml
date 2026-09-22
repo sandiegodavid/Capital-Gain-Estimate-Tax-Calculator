@@ -1,3 +1,7 @@
+# Scope reviewed 2026-09-21: federal, all 41 states with a broad individual
+# income tax, and Washington's capital-gains-only excise tax. States without a
+# broad individual income tax are otherwise omitted.
+
 - jurisdiction: "United States (IRS)"
   abbreviation: "US"
   payment_url: "https://www.irs.gov/payments"
@@ -48,7 +52,7 @@
 
 - jurisdiction: "Indiana"
   abbreviation: "IN"
-  payment_url: "https://www.in.gov/dor/individual-income-taxes/payments-and-billing/index.html"
+  payment_url: "https://www.in.gov/dor/i-need-to/make-a-payment/index.html"
 
 - jurisdiction: "Iowa"
   abbreviation: "IA"
@@ -68,7 +72,7 @@
 
 - jurisdiction: "Maine"
   abbreviation: "ME"
-  payment_url: "https://www1.maine.gov/revenue/portal"
+  payment_url: "https://revenue.maine.gov/"
 
 - jurisdiction: "Maryland"
   abbreviation: "MD"
@@ -124,7 +128,7 @@
 
 - jurisdiction: "Ohio"
   abbreviation: "OH"
-  payment_url: "https://tax.ohio.gov/individual/pay-online/payonline"
+  payment_url: "https://myportal.tax.ohio.gov/tap/_/"
 
 - jurisdiction: "Oklahoma"
   abbreviation: "OK"
@@ -157,6 +161,13 @@
 - jurisdiction: "Virginia"
   abbreviation: "VA"
   payment_url: "https://www.tax.virginia.gov/payments"
+
+# Washington does not impose a broad individual income tax. It is included
+# because this app estimates Washington's tax on net long-term capital gains.
+- jurisdiction: "Washington"
+  abbreviation: "WA"
+  tax_scope: "capital_gains_excise_only"
+  payment_url: "https://dor.wa.gov/taxes-rates/other-taxes/capital-gains-tax"
 
 - jurisdiction: "West Virginia"
   abbreviation: "WV"

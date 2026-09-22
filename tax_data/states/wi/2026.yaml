@@ -1,0 +1,35 @@
+tax_year: 2026
+jurisdiction: Wisconsin
+abbreviation: WI
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Wisconsin 2026 individual income-tax provisions", url: "https://www.revenue.wi.gov/TaxForms2017through2019/w-234f.pdf"}
+  payment: {title: "Wisconsin online payment", url: "https://www.revenue.wi.gov/Pages/OnlineServices/Pay.aspx"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_wisconsin_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: state_formula
+  calculation_supported: false
+  single: {maximum: 13960, full_through_income: 20119, zero_at_income: 136453}
+  married_filing_jointly: {maximum: 25840, full_through_income: 29039, zero_at_income: 159690}
+  married_filing_separately: {maximum: 12280, full_through_income: 13779, zero_at_income: 75869}
+  head_of_household: {maximum: 18030, full_through_income: 20119, zero_at_income: 136453}
+  qualifying_surviving_spouse: {maximum: 25840, full_through_income: 29039, zero_at_income: 159690}
+brackets:
+  ordinary:
+    single: &single [{bracket: 15110, rate: 3.5}, {bracket: 51950, rate: 4.4}, {bracket: 332720, rate: 5.3}, {bracket: null, rate: 7.65}]
+    married_filing_jointly: &joint [{bracket: 20150, rate: 3.5}, {bracket: 69260, rate: 4.4}, {bracket: 443630, rate: 5.3}, {bracket: null, rate: 7.65}]
+    married_filing_separately: [{bracket: 10080, rate: 3.5}, {bracket: 34630, rate: 4.4}, {bracket: 221820, rate: 5.3}, {bracket: null, rate: 7.65}]
+    head_of_household: *single
+    qualifying_surviving_spouse: *joint
+capital_gains:
+  treatment: percentage_exclusion_then_ordinary_schedule
+  exclusion_percent: 30
+  qualifying_farm_asset_exclusion_percent: 60
+  calculation_supported: true
+dependent_benefits:
+  - {name: dependent_exemption, type: deduction, amount_per_dependent: 700}
+other_credits: []
+calculation_notes:
+  - "The $700 exemption also applies to the taxpayer and eligible spouse; age 65 or older adds $250 per eligible person."

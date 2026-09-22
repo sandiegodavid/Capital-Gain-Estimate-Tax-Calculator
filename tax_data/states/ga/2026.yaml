@@ -1,0 +1,29 @@
+tax_year: 2026
+jurisdiction: Georgia
+abbreviation: GA
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Georgia important tax updates", url: "https://dor.georgia.gov/taxes/important-tax-updates"}
+  payment: {title: "Georgia tax payment", url: "https://dor.georgia.gov/taxes/how-do-i-make-tax-payment"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_georgia_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 15000
+  married_filing_jointly: 30000
+  married_filing_separately: 15000
+  head_of_household: 15000
+  qualifying_surviving_spouse: 30000
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 4.99}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: dependent_exemption, type: deduction, amount_per_dependent: 5000}
+other_credits: []

@@ -1,0 +1,33 @@
+tax_year: 2026
+jurisdiction: Minnesota
+abbreviation: MN
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Minnesota 2026 brackets, standard deduction, and dependent exemption", url: "https://www.revenue.state.mn.us/press-release/2025-12-16/minnesota-income-tax-brackets-standard-deduction-and-dependent-exemption"}
+  payment: {title: "Minnesota tax payment", url: "https://www.revenue.state.mn.us/make-payment"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_minnesota_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed_with_phaseout
+  calculation_supported: false
+  single: 15300
+  married_filing_jointly: 30600
+  married_filing_separately: 15300
+  head_of_household: 23000
+  qualifying_surviving_spouse: 30600
+  phaseout_begins_federal_agi: {married_filing_separately: 122200, all_other_statuses: 244400}
+brackets:
+  ordinary:
+    single: [{bracket: 33310, rate: 5.35}, {bracket: 109430, rate: 6.8}, {bracket: 203150, rate: 7.85}, {bracket: null, rate: 9.85}]
+    married_filing_jointly: &joint [{bracket: 48700, rate: 5.35}, {bracket: 193480, rate: 6.8}, {bracket: 337930, rate: 7.85}, {bracket: null, rate: 9.85}]
+    married_filing_separately: [{bracket: 24350, rate: 5.35}, {bracket: 96740, rate: 6.8}, {bracket: 168965, rate: 7.85}, {bracket: null, rate: 9.85}]
+    head_of_household: [{bracket: 41010, rate: 5.35}, {bracket: 164800, rate: 6.8}, {bracket: 270060, rate: 7.85}, {bracket: null, rate: 9.85}]
+    qualifying_surviving_spouse: *joint
+capital_gains:
+  treatment: ordinary_schedule_plus_net_investment_income_tax
+  calculation_supported: false
+  note: "Capital gains use the ordinary schedule; Minnesota also imposes a 1% tax on net investment income above the statutory $1 million threshold."
+dependent_benefits:
+  - {name: dependent_exemption, type: deduction, amount_per_dependent: 5300}
+other_credits: []

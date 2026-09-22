@@ -1,0 +1,38 @@
+tax_year: 2026
+jurisdiction: Montana
+abbreviation: MT
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Montana House Bill 337 tax changes", url: "https://revenue.mt.gov/news/recent-news/HB-337"}
+  payment: {title: "Montana TransAction Portal", url: "https://tap.dor.mt.gov/"}
+tax_base: {starting_point: federal_taxable_income_with_montana_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: federal_in_tax_base
+  calculation_supported: true
+  single: 16100
+  married_filing_jointly: 32200
+  married_filing_separately: 16100
+  head_of_household: 24150
+  qualifying_surviving_spouse: 32200
+brackets:
+  ordinary:
+    single: &single [{bracket: 47500, rate: 4.7}, {bracket: null, rate: 5.65}]
+    married_filing_jointly: &joint [{bracket: 95000, rate: 4.7}, {bracket: null, rate: 5.65}]
+    married_filing_separately: *single
+    head_of_household: [{bracket: 71250, rate: 4.7}, {bracket: null, rate: 5.65}]
+    qualifying_surviving_spouse: *joint
+  long_term_capital_gains:
+    single: &lt_single [{bracket: 47500, rate: 3}, {bracket: null, rate: 4.1}]
+    married_filing_jointly: &lt_joint [{bracket: 95000, rate: 3}, {bracket: null, rate: 4.1}]
+    married_filing_separately: *lt_single
+    head_of_household: [{bracket: 71250, rate: 3}, {bracket: null, rate: 4.1}]
+    qualifying_surviving_spouse: *lt_joint
+capital_gains:
+  treatment: separate_long_term_schedule
+  calculation_supported: false
+  note: "Net long-term gains are stacked with ordinary taxable income when determining the applicable capital-gain band."
+dependent_benefits: []
+other_credits:
+  - {name: state_earned_income_tax_credit, type: federal_percentage, percent_of_federal_credit: 20}

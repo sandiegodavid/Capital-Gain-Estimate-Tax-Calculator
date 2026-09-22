@@ -1,0 +1,32 @@
+tax_year: 2026
+jurisdiction: Mississippi
+abbreviation: MS
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Mississippi Department of Revenue general tax information", url: "https://dor.ms.gov/general-information"}
+  legislation: {title: "Mississippi 2025 tax legislation", url: "https://www.dor.ms.gov/forms-resources/laws-regulations/2025-legislation"}
+  payment: {title: "Mississippi online tax payments", url: "https://www.dor.ms.gov/forms-resources/make-online-tax-payments"}
+tax_base: {starting_point: mississippi_adjusted_gross_income, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 2300
+  married_filing_jointly: 4600
+  married_filing_separately: 2300
+  head_of_household: 3400
+  qualifying_surviving_spouse: 4600
+brackets:
+  ordinary:
+    single: &all [{bracket: 10000, rate: 0}, {bracket: null, rate: 4}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: dependent_exemption, type: deduction, amount_per_dependent: 1500}
+other_credits: []
+calculation_notes:
+  - "Personal exemptions: $6,000 single/MFS, $12,000 joint/qualifying surviving spouse, and $8,000 head of household."

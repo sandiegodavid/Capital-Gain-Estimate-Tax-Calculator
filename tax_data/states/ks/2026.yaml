@@ -1,0 +1,32 @@
+tax_year: 2026
+jurisdiction: Kansas
+abbreviation: KS
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "2026 Kansas Form K-40ES", url: "https://www.ksrevenue.gov/pdf/k-40es26.pdf"}
+  law_change: {title: "Kansas Notice 24-08", url: "https://www.ksrevenue.gov/taxnotices/notice24-08.pdf"}
+  payment: {title: "Kansas tax payment", url: "https://www.ksrevenue.gov/taxpayment.html"}
+tax_base: {starting_point: kansas_adjusted_gross_income, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 3605
+  married_filing_jointly: 8240
+  married_filing_separately: 4120
+  head_of_household: 6180
+  qualifying_surviving_spouse: 8240
+brackets:
+  ordinary:
+    single: &single [{bracket: 23000, rate: 5.2}, {bracket: null, rate: 5.58}]
+    married_filing_jointly: &joint [{bracket: 46000, rate: 5.2}, {bracket: null, rate: 5.58}]
+    married_filing_separately: *single
+    head_of_household: *single
+    qualifying_surviving_spouse: *joint
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: dependent_exemption, type: deduction, amount_per_dependent: 2320}
+other_credits: []
+calculation_notes:
+  - "Personal exemption is $9,160 for single/MFS/HOH and $18,320 for joint/qualifying surviving spouse."

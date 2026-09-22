@@ -1,0 +1,26 @@
+tax_year: 2026
+jurisdiction: Connecticut
+abbreviation: CT
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status:
+  status: final
+  checked_on: "2026-09-21"
+  unresolved_fields: []
+sources:
+  rates: {title: "2026 Form CT-1040ES", url: "https://portal.ct.gov/-/media/drs/forms/2025/income/ct1040es-flat0126.pdf"}
+  payment: {title: "Connecticut myconneCT", url: "https://portal.ct.gov/DRS/myconneCT/myconneCT"}
+tax_base: {starting_point: connecticut_adjusted_gross_income, local_income_taxes_included: false}
+standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
+brackets:
+  ordinary:
+    single: &single [{bracket: 10000, rate: 2}, {bracket: 50000, rate: 4.5}, {bracket: 100000, rate: 5.5}, {bracket: 200000, rate: 6}, {bracket: 250000, rate: 6.5}, {bracket: 500000, rate: 6.9}, {bracket: null, rate: 6.99}]
+    married_filing_jointly: &joint [{bracket: 20000, rate: 2}, {bracket: 100000, rate: 4.5}, {bracket: 200000, rate: 5.5}, {bracket: 400000, rate: 6}, {bracket: 500000, rate: 6.5}, {bracket: 1000000, rate: 6.9}, {bracket: null, rate: 6.99}]
+    married_filing_separately: *single
+    head_of_household: [{bracket: 16000, rate: 2}, {bracket: 80000, rate: 4.5}, {bracket: 160000, rate: 5.5}, {bracket: 320000, rate: 6}, {bracket: 400000, rate: 6.5}, {bracket: 800000, rate: 6.9}, {bracket: null, rate: 6.99}]
+    qualifying_surviving_spouse: *joint
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits: []
+other_credits: []
+calculation_notes:
+  - "Connecticut's personal exemption, 2% rate reduction, 3% credit phaseout, and tax recapture depend on AGI and filing status; a complete calculation requires the official worksheets."

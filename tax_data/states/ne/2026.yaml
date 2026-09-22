@@ -1,0 +1,32 @@
+tax_year: 2026
+jurisdiction: Nebraska
+abbreviation: NE
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "2026 Nebraska Form 1040N-ES", url: "https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2025/f_1040N-ES.pdf"}
+  payment: {title: "Nebraska individual electronic payments", url: "https://revenue.nebraska.gov/individuals/electronic-payment-options-individual-income-tax"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_nebraska_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 8850
+  married_filing_jointly: 17700
+  married_filing_separately: 8850
+  head_of_household: 12950
+  qualifying_surviving_spouse: 17700
+brackets:
+  ordinary:
+    single: &single [{bracket: 4130, rate: 2.46}, {bracket: 24760, rate: 3.51}, {bracket: null, rate: 4.55}]
+    married_filing_jointly: &joint [{bracket: 8250, rate: 2.46}, {bracket: 49530, rate: 3.51}, {bracket: null, rate: 4.55}]
+    married_filing_separately: *single
+    head_of_household: [{bracket: 7700, rate: 2.46}, {bracket: 39620, rate: 3.51}, {bracket: null, rate: 4.55}]
+    qualifying_surviving_spouse: *joint
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: personal_exemption_credit, type: nonrefundable_credit, amount_per_dependent: 176}
+other_credits: []
+calculation_notes:
+  - "The $176 personal exemption credit also applies to the taxpayer and eligible spouse."
+  - "Additional standard deduction is $2,050 for unmarried age/blind qualifications and $1,700 for married or qualifying surviving spouse qualifications."

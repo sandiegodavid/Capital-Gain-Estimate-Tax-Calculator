@@ -1,0 +1,29 @@
+tax_year: 2026
+jurisdiction: Hawaii
+abbreviation: HI
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "Hawaii Department of Taxation individual income-tax FAQ", url: "https://tax.hawaii.gov/faq/"}
+  payment: {title: "Hawaii tax e-services", url: "https://tax.hawaii.gov/eservices/"}
+tax_base: {starting_point: hawaii_adjusted_gross_income, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 8000
+  married_filing_jointly: 16000
+  married_filing_separately: 8000
+  head_of_household: 12000
+  qualifying_surviving_spouse: 16000
+brackets:
+  ordinary:
+    single: &single [{bracket: 2400, rate: 1.4}, {bracket: 4800, rate: 3.2}, {bracket: 9600, rate: 5.5}, {bracket: 14400, rate: 6.4}, {bracket: 19200, rate: 6.8}, {bracket: 24000, rate: 7.2}, {bracket: 36000, rate: 7.6}, {bracket: 48000, rate: 7.9}, {bracket: 150000, rate: 8.25}, {bracket: 175000, rate: 9}, {bracket: 200000, rate: 10}, {bracket: null, rate: 11}]
+    married_filing_jointly: &joint [{bracket: 4800, rate: 1.4}, {bracket: 9600, rate: 3.2}, {bracket: 19200, rate: 5.5}, {bracket: 28800, rate: 6.4}, {bracket: 38400, rate: 6.8}, {bracket: 48000, rate: 7.2}, {bracket: 72000, rate: 7.6}, {bracket: 96000, rate: 7.9}, {bracket: 300000, rate: 8.25}, {bracket: 350000, rate: 9}, {bracket: 400000, rate: 10}, {bracket: null, rate: 11}]
+    married_filing_separately: *single
+    head_of_household: [{bracket: 3600, rate: 1.4}, {bracket: 7200, rate: 3.2}, {bracket: 14400, rate: 5.5}, {bracket: 21600, rate: 6.4}, {bracket: 28800, rate: 6.8}, {bracket: 36000, rate: 7.2}, {bracket: 54000, rate: 7.6}, {bracket: 72000, rate: 7.9}, {bracket: 225000, rate: 8.25}, {bracket: 262500, rate: 9}, {bracket: 300000, rate: 10}, {bracket: null, rate: 11}]
+    qualifying_surviving_spouse: *joint
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: personal_exemption_for_dependent, type: deduction, amount_per_dependent: 1144}
+other_credits: []

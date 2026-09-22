@@ -1,0 +1,39 @@
+tax_year: 2026
+jurisdiction: Utah
+abbreviation: UT
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status:
+  status: provisional
+  checked_on: "2026-09-21"
+  unresolved_fields: [taxpayer_credit_parameters, dependent_personal_exemption]
+  note: "The 4.45% rate is final; the latest published return parameters for the taxpayer credit are tax year 2025."
+sources:
+  rate: {title: "Utah 2026 withholding guide", url: "https://files.tax.utah.gov/tax/forms/pubs/pub-14-eff-010626.pdf"}
+  statute: {title: "Utah Code 59-10-104", url: "https://le.utah.gov/xcode/title59/chapter10/C59-10-S104_2026050620260506.pdf"}
+  latest_return: {title: "Utah individual income-tax packet", url: "https://files.tax.utah.gov/tax/forms/current/tc-40-fullpacket.pdf"}
+  payment: {title: "Utah tax payments", url: "https://tax.utah.gov/online-services/payments/"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_utah_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: none_taxpayer_credit_uses_federal_deduction
+  calculation_supported: false
+  single: 0
+  married_filing_jointly: 0
+  married_filing_separately: 0
+  head_of_household: 0
+  qualifying_surviving_spouse: 0
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 4.45}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: taxpayer_tax_credit_dependent_component, type: credit_base_deduction, source_tax_year: 2025, personal_exemption_per_dependent: 2111}
+  - {name: child_tax_credit, type: nonrefundable_credit, source_tax_year: 2025, maximum_per_child_age_5_or_younger: 1000, magi_phaseout_applies: true}
+other_credits:
+  - {name: state_earned_income_tax_credit, type: federal_percentage, source_tax_year: 2025, percent_of_federal_credit: 20, utah_wage_limit_applies: true}
+calculation_notes:
+  - "Utah's taxpayer credit begins at 6% of eligible federal deduction amounts plus the Utah dependent exemption, then phases out at 1.3% over status-specific income thresholds."

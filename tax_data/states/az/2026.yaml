@@ -1,0 +1,39 @@
+tax_year: 2026
+jurisdiction: Arizona
+abbreviation: AZ
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status:
+  status: provisional
+  checked_on: "2026-09-21"
+  unresolved_fields: [standard_deduction, dependent_credit]
+  note: "The 2026 estimated-tax booklet directs taxpayers to use allowable 2025 deductions and credits until the 2026 return is published."
+sources:
+  rates: {title: "2026 Arizona Form 140ES booklet", url: "https://azdor.gov/sites/default/files/document/FORMS_INDIVIDUAL_2026_140ESBooklet.pdf"}
+  deductions_and_dependents: {title: "Arizona deductions and exemptions", url: "https://azdor.gov/individuals/income-tax-filing-assistance/deductions-and-exemptions"}
+  payment: {title: "AZTaxes individual payment", url: "https://www.aztaxes.gov/Home/PaymentIndividual"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_arizona_adjustments, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: false
+  source_tax_year: 2025
+  single: 15750
+  married_filing_jointly: 31500
+  married_filing_separately: 15750
+  head_of_household: 23625
+  qualifying_surviving_spouse: 31500
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 2.5}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true, note: "Arizona has no separate general capital-gain rate."}
+dependent_benefits:
+  - name: dependent_tax_credit
+    type: nonrefundable_credit
+    source_tax_year: 2025
+    amount: {under_age_17: 100, age_17_or_older: 25}
+    phaseout_begins_agi: {married_filing_jointly: 400000, all_other_statuses: 200000}
+other_credits: []

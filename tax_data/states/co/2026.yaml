@@ -1,0 +1,36 @@
+tax_year: 2026
+jurisdiction: Colorado
+abbreviation: CO
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status:
+  status: provisional
+  checked_on: "2026-09-21"
+  unresolved_fields: [effective_tax_rate]
+  note: "4.4% is the statutory rate; a temporary TABOR rate reduction, if triggered, is determined after the tax year."
+sources:
+  rates: {title: "Colorado Individual Income Tax Guide, January 2026", url: "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_Jan_2026.pdf"}
+  payment: {title: "Colorado individual income-tax payment", url: "https://tax.colorado.gov/pay-individual-income-tax"}
+tax_base: {starting_point: federal_taxable_income_with_colorado_modifications, local_income_taxes_included: false}
+standard_deduction:
+  type: federal_in_tax_base
+  calculation_supported: true
+  single: 16100
+  married_filing_jointly: 32200
+  married_filing_separately: 16100
+  head_of_household: 24150
+  qualifying_surviving_spouse: 32200
+brackets:
+  ordinary:
+    single: &all [{bracket: null, rate: 4.4}]
+    married_filing_jointly: *all
+    married_filing_separately: *all
+    head_of_household: *all
+    qualifying_surviving_spouse: *all
+capital_gains:
+  treatment: ordinary_schedule_with_conditional_subtraction
+  calculation_supported: false
+  note: "A narrow Colorado-source capital-gain subtraction may apply; eligibility depends on asset, acquisition date, and holding period."
+dependent_benefits: []
+other_credits:
+  - {name: state_earned_income_tax_credit, type: federal_percentage, eligibility_tests_required: true}

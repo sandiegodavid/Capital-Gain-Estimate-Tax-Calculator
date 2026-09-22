@@ -1,0 +1,34 @@
+tax_year: 2026
+jurisdiction: New York
+abbreviation: NY
+currency: USD
+tax_scope: broad_individual_income_tax
+data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+sources:
+  rules: {title: "2026 New York Form IT-2105-I", url: "https://www.tax.ny.gov/pdf/current_forms/it/it2105i.pdf"}
+  payment: {title: "New York individual income-tax payment", url: "https://www.tax.ny.gov/pay/ind/pay-income-tax-online.htm"}
+tax_base: {starting_point: federal_adjusted_gross_income_with_new_york_modifications, local_income_taxes_included: false}
+standard_deduction:
+  type: state_fixed
+  calculation_supported: true
+  single: 8000
+  married_filing_jointly: 16050
+  married_filing_separately: 8000
+  head_of_household: 11200
+  qualifying_surviving_spouse: 16050
+  claimed_as_dependent: 3100
+brackets:
+  ordinary:
+    single: &single [{bracket: 8500, rate: 3.9}, {bracket: 11700, rate: 4.4}, {bracket: 13900, rate: 5.15}, {bracket: 80650, rate: 5.4}, {bracket: 215400, rate: 5.9}, {bracket: 1077550, rate: 6.85}, {bracket: 5000000, rate: 9.65}, {bracket: 25000000, rate: 10.3}, {bracket: null, rate: 10.9}]
+    married_filing_jointly: &joint [{bracket: 17150, rate: 3.9}, {bracket: 23600, rate: 4.4}, {bracket: 27900, rate: 5.15}, {bracket: 161550, rate: 5.4}, {bracket: 323200, rate: 5.9}, {bracket: 2155350, rate: 6.85}, {bracket: 5000000, rate: 9.65}, {bracket: 25000000, rate: 10.3}, {bracket: null, rate: 10.9}]
+    married_filing_separately: *single
+    head_of_household: [{bracket: 12800, rate: 3.9}, {bracket: 17650, rate: 4.4}, {bracket: 20900, rate: 5.15}, {bracket: 107650, rate: 5.4}, {bracket: 269300, rate: 5.9}, {bracket: 1616450, rate: 6.85}, {bracket: 5000000, rate: 9.65}, {bracket: 25000000, rate: 10.3}, {bracket: null, rate: 10.9}]
+    qualifying_surviving_spouse: *joint
+capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+dependent_benefits:
+  - {name: dependent_exemption, type: deduction, amount_per_dependent: 1000}
+other_credits:
+  - {name: state_earned_income_tax_credit, type: federal_percentage, eligibility_tests_required: true}
+calculation_notes:
+  - "New York's high-income benefit recapture requires the official tax computation worksheet; the marginal schedule alone is incomplete."
+  - "New York City, Yonkers, and Metropolitan Commuter Transportation Mobility taxes are excluded."
