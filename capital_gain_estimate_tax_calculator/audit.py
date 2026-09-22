@@ -42,6 +42,17 @@ def _write_normalized_lots(report: NormalizedReport, output_path: Path) -> None:
 def _write_source_manifest(report: NormalizedReport, output_path: Path) -> None:
     with output_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
-        writer.writerow(["source_name", "source_file", "recognized_rows", "included_rows", "earliest_sale", "latest_sale"])
+        writer.writerow(
+            ["source_name", "source_file", "recognized_rows", "included_rows", "earliest_sale", "latest_sale"]
+        )
         for source in report.sources:
-            writer.writerow([source.source_name, source.source_file, source.recognized_rows, source.included_rows, source.earliest_sale.isoformat() if source.earliest_sale else "", source.latest_sale.isoformat() if source.latest_sale else ""])
+            writer.writerow(
+                [
+                    source.source_name,
+                    source.source_file,
+                    source.recognized_rows,
+                    source.included_rows,
+                    source.earliest_sale.isoformat() if source.earliest_sale else "",
+                    source.latest_sale.isoformat() if source.latest_sale else "",
+                ]
+            )

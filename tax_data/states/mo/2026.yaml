@@ -4,10 +4,11 @@ abbreviation: MO
 currency: USD
 tax_scope: broad_individual_income_tax
 data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+filing:
+  payment_url: "https://dor.mo.gov/taxation/individual/pay-online.html"
 sources:
   rates: {title: "2026 Missouri Form MO-1040ES", url: "https://dor.mo.gov/forms/MO-1040ES_2026.pdf"}
   capital_gains: {title: "Missouri capital-gains subtraction FAQ", url: "https://dor.mo.gov/faq/taxation/individual/capital-gains-subtraction.html"}
-  payment: {title: "Missouri individual tax payment", url: "https://dor.mo.gov/taxation/individual/pay-online.html"}
 tax_base: {starting_point: federal_adjusted_gross_income_with_missouri_modifications, local_income_taxes_included: false}
 standard_deduction:
   type: federal_deduction_allowed_in_state_calculation

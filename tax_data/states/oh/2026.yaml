@@ -5,36 +5,90 @@ currency: USD
 tax_scope: broad_individual_income_tax
 data_status:
   status: provisional
-  checked_on: "2026-09-21"
-  unresolved_fields: [final_exemption_allowance]
-  note: "The official 2026 estimated-tax worksheet publishes the tax formula and a conservative $1,900 exemption amount; final return instructions may refine the exemption allowance."
+  checked_on: '2026-09-21'
+  unresolved_fields:
+  - final_exemption_allowance
+  note: The official 2026 estimated-tax worksheet publishes the tax formula and a conservative $1,900 exemption amount; final
+    return instructions may refine the exemption allowance.
+filing:
+  payment_url: https://myportal.tax.ohio.gov/tap/_/
 sources:
-  rules: {title: "2026 Ohio estimated income-tax worksheet", url: "https://dam.assets.ohio.gov/image/upload/v1768492829/tax.ohio.gov/forms/ohio_individual/individual/2026/ites-oupc.pdf"}
-  exemptions: {title: "Ohio Revised Code 5747.025", url: "https://codes.ohio.gov/ohio-revised-code/section-5747.025"}
-  payment: {title: "Ohio OH|TAX portal", url: "https://myportal.tax.ohio.gov/tap/_/"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_ohio_adjustments, local_income_taxes_included: false}
-standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
+  rules:
+    title: 2026 Ohio estimated income-tax worksheet
+    url: https://dam.assets.ohio.gov/image/upload/v1768492829/tax.ohio.gov/forms/ohio_individual/individual/2026/ites-oupc.pdf
+  exemptions:
+    title: Ohio Revised Code 5747.025
+    url: https://codes.ohio.gov/ohio-revised-code/section-5747.025
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_ohio_adjustments
+  local_income_taxes_included: false
+standard_deduction:
+  type: none
+  calculation_supported: true
+  single: 0
+  married_filing_jointly: 0
+  married_filing_separately: 0
+  head_of_household: 0
+  qualifying_surviving_spouse: 0
 brackets:
   ordinary:
-    single: &all [{bracket: 26050, rate: 0}, {bracket: 100000, rate: 2.75}, {bracket: null, rate: 3.125}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
+    single: &id001
+    - bracket: 26050
+      rate: 0
+    - bracket: 100000
+      rate: 2.75
+    - bracket: null
+      rate: 3.125
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
 tax_formula:
   calculation_supported: true
   nonbusiness_income:
-    - {taxable_income_up_to: 26050, base_tax: 0, rate_on_excess: 0, excess_over: 0}
-    - {taxable_income_up_to: 100000, base_tax: 342, rate_on_excess: 2.75, excess_over: 26050}
-    - {taxable_income_up_to: null, base_tax: 2394.32, rate_on_excess: 3.125, excess_over: 100000}
+  - taxable_income_up_to: 26050
+    base_tax: 0
+    rate_on_excess: 0
+    excess_over: 0
+  - taxable_income_up_to: 100000
+    base_tax: 342
+    rate_on_excess: 2.75
+    excess_over: 26050
+  - taxable_income_up_to: null
+    base_tax: 2394.32
+    rate_on_excess: 3.125
+    excess_over: 100000
   business_income_rate: 3
 capital_gains:
   treatment: ordinary_nonbusiness_income_formula
   calculation_supported: true
-  note: "Investment capital gains generally enter the nonbusiness-income formula; qualifying business income follows separate Ohio rules."
+  note: Investment capital gains generally enter the nonbusiness-income formula; qualifying business income follows separate
+    Ohio rules.
 dependent_benefits:
-  - {name: exemption_allowance, type: deduction, estimated_amount_per_exemption: 1900, unavailable_at_expected_federal_agi: 500000}
+- id: exemption_allowance
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: null
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: provisional
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []
 calculation_notes:
-  - "Use tax_formula, not a generic marginal-bracket accumulator: the $342 base tax creates a discontinuity above $26,050."
-  - "Municipal and school-district income taxes are excluded."
+- 'Use tax_formula, not a generic marginal-bracket accumulator: the $342 base tax creates a discontinuity above $26,050.'
+- Municipal and school-district income taxes are excluded.

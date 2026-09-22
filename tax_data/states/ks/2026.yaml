@@ -3,12 +3,22 @@ jurisdiction: Kansas
 abbreviation: KS
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://www.ksrevenue.gov/taxpayment.html
 sources:
-  rules: {title: "2026 Kansas Form K-40ES", url: "https://www.ksrevenue.gov/pdf/k-40es26.pdf"}
-  law_change: {title: "Kansas Notice 24-08", url: "https://www.ksrevenue.gov/taxnotices/notice24-08.pdf"}
-  payment: {title: "Kansas tax payment", url: "https://www.ksrevenue.gov/taxpayment.html"}
-tax_base: {starting_point: kansas_adjusted_gross_income, local_income_taxes_included: false}
+  rules:
+    title: 2026 Kansas Form K-40ES
+    url: https://www.ksrevenue.gov/pdf/k-40es26.pdf
+  law_change:
+    title: Kansas Notice 24-08
+    url: https://www.ksrevenue.gov/taxnotices/notice24-08.pdf
+tax_base:
+  starting_point: kansas_adjusted_gross_income
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -19,14 +29,46 @@ standard_deduction:
   qualifying_surviving_spouse: 8240
 brackets:
   ordinary:
-    single: &single [{bracket: 23000, rate: 5.2}, {bracket: null, rate: 5.58}]
-    married_filing_jointly: &joint [{bracket: 46000, rate: 5.2}, {bracket: null, rate: 5.58}]
-    married_filing_separately: *single
-    head_of_household: *single
-    qualifying_surviving_spouse: *joint
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 23000
+      rate: 5.2
+    - bracket: null
+      rate: 5.58
+    married_filing_jointly: &id002
+    - bracket: 46000
+      rate: 5.2
+    - bracket: null
+      rate: 5.58
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id002
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, amount_per_dependent: 2320}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 2320
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: true
 other_credits: []
 calculation_notes:
-  - "Personal exemption is $9,160 for single/MFS/HOH and $18,320 for joint/qualifying surviving spouse."
+- Personal exemption is $9,160 for single/MFS/HOH and $18,320 for joint/qualifying surviving spouse.

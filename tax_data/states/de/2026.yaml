@@ -3,11 +3,19 @@ jurisdiction: Delaware
 abbreviation: DE
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://revenue.delaware.gov/payment/
 sources:
-  rules: {title: "Delaware personal income-tax forms and instructions", url: "https://revenue.delaware.gov/personal-income-tax-forms/personal-income-tax-forms-instructions/"}
-  payment: {title: "Delaware tax payment", url: "https://revenue.delaware.gov/payment/"}
-tax_base: {starting_point: delaware_adjusted_gross_income, local_income_taxes_included: false}
+  rules:
+    title: Delaware personal income-tax forms and instructions
+    url: https://revenue.delaware.gov/personal-income-tax-forms/personal-income-tax-forms-instructions/
+tax_base:
+  starting_point: delaware_adjusted_gross_income
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -18,13 +26,53 @@ standard_deduction:
   qualifying_surviving_spouse: 6500
 brackets:
   ordinary:
-    single: &all [{bracket: 2000, rate: 0}, {bracket: 5000, rate: 2.2}, {bracket: 10000, rate: 3.9}, {bracket: 20000, rate: 4.8}, {bracket: 25000, rate: 5.2}, {bracket: 60000, rate: 5.55}, {bracket: null, rate: 6.6}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 2000
+      rate: 0
+    - bracket: 5000
+      rate: 2.2
+    - bracket: 10000
+      rate: 3.9
+    - bracket: 20000
+      rate: 4.8
+    - bracket: 25000
+      rate: 5.2
+    - bracket: 60000
+      rate: 5.55
+    - bracket: null
+      rate: 6.6
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: dependent_personal_credit, type: nonrefundable_credit, amount_per_dependent: 110}
+- id: dependent_personal_credit
+  benefit_type: nonrefundable_credit
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 110
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: true
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: true
 other_credits:
-  - {name: personal_credit, type: nonrefundable_credit, amount_per_person: 110}
+- name: personal_credit
+  type: nonrefundable_credit
+  amount_per_person: 110

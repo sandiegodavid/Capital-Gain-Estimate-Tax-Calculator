@@ -3,12 +3,22 @@ jurisdiction: Iowa
 abbreviation: IA
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://revenue.iowa.gov/taxes/make-payment
 sources:
-  rate: {title: "Iowa announces 2026 individual income-tax rate", url: "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates"}
-  exemptions: {title: "Iowa exemption credits", url: "https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/1040-expanded-instructions/exemption-credits"}
-  payment: {title: "Iowa tax payment", url: "https://revenue.iowa.gov/taxes/make-payment"}
-tax_base: {starting_point: federal_taxable_income_with_iowa_adjustments, local_income_taxes_included: false}
+  rate:
+    title: Iowa announces 2026 individual income-tax rate
+    url: https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates
+  exemptions:
+    title: Iowa exemption credits
+    url: https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/1040-expanded-instructions/exemption-credits
+tax_base:
+  starting_point: federal_taxable_income_with_iowa_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: federal_in_tax_base
   calculation_supported: true
@@ -19,16 +29,43 @@ standard_deduction:
   qualifying_surviving_spouse: 32200
 brackets:
   ordinary:
-    single: &all [{bracket: null, rate: 3.8}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
+    single: &id001
+    - bracket: null
+      rate: 3.8
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
 capital_gains:
   treatment: ordinary_schedule_with_conditional_exclusion
   calculation_supported: false
-  note: "A narrow exclusion applies to qualifying farming/business capital gains; general investment gains use the ordinary rate."
+  note: A narrow exclusion applies to qualifying farming/business capital gains; general investment gains use the ordinary
+    rate.
 dependent_benefits:
-  - {name: exemption_credit, type: nonrefundable_credit, amount_per_dependent: 40}
+- id: exemption_credit
+  benefit_type: nonrefundable_credit
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 40
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: true
+  source_tax_year: 2026
+  source: rate
+  status: final
+  calculation_supported: true
 other_credits:
-  - {name: taxpayer_and_spouse_exemption_credit, type: nonrefundable_credit, amount_per_person: 40}
+- name: taxpayer_and_spouse_exemption_credit
+  type: nonrefundable_credit
+  amount_per_person: 40

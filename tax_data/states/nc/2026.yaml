@@ -3,12 +3,22 @@ jurisdiction: North Carolina
 abbreviation: NC
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://www.ncdor.gov/file-pay/file-pay-individuals
 sources:
-  rules: {title: "North Carolina individual estimated income tax", url: "https://www.ncdor.gov/individual-estimated-income-tax/open"}
-  child_deduction: {title: "North Carolina individual tax-law changes", url: "https://www.ncdor.gov/2021-tax-law-changes/open"}
-  payment: {title: "North Carolina file and pay", url: "https://www.ncdor.gov/file-pay/file-pay-individuals"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_north_carolina_adjustments, local_income_taxes_included: false}
+  rules:
+    title: North Carolina individual estimated income tax
+    url: https://www.ncdor.gov/individual-estimated-income-tax/open
+  child_deduction:
+    title: North Carolina individual tax-law changes
+    url: https://www.ncdor.gov/2021-tax-law-changes/open
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_north_carolina_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -19,12 +29,38 @@ standard_deduction:
   qualifying_surviving_spouse: 25500
 brackets:
   ordinary:
-    single: &all [{bracket: null, rate: 3.99}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: null
+      rate: 3.99
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: child_deduction, type: deduction, maximum_per_qualifying_child: 3000, amount_varies_by_federal_agi_and_status: true, calculation_supported: false}
+- id: child_deduction
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_child
+    amount: 3000
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []

@@ -3,23 +3,66 @@ jurisdiction: Illinois
 abbreviation: IL
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://tax.illinois.gov/individuals/pay.html
 sources:
-  rate: {title: "Illinois income-tax rates", url: "https://tax.illinois.gov/research/taxrates/income.html"}
-  exemptions: {title: "Illinois 2026 exemption allowance", url: "https://tax.illinois.gov/questionsandanswers/answer.851.html"}
-  payment: {title: "Illinois individual payments", url: "https://tax.illinois.gov/individuals/pay.html"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_illinois_modifications, local_income_taxes_included: false}
-standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
+  rate:
+    title: Illinois income-tax rates
+    url: https://tax.illinois.gov/research/taxrates/income.html
+  exemptions:
+    title: Illinois 2026 exemption allowance
+    url: https://tax.illinois.gov/questionsandanswers/answer.851.html
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_illinois_modifications
+  local_income_taxes_included: false
+standard_deduction:
+  type: none
+  calculation_supported: true
+  single: 0
+  married_filing_jointly: 0
+  married_filing_separately: 0
+  head_of_household: 0
+  qualifying_surviving_spouse: 0
 brackets:
   ordinary:
-    single: &all [{bracket: null, rate: 4.95}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: null
+      rate: 4.95
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: dependent_exemption_allowance, type: deduction, amount_per_dependent: 2925, income_limit: {joint: 500000, all_other: 250000}}
+- id: dependent_exemption_allowance
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 2925
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rate
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []
 calculation_notes:
-  - "The same $2,925 exemption allowance applies to the taxpayer and eligible spouse, subject to the income limits."
+- The same $2,925 exemption allowance applies to the taxpayer and eligible spouse, subject to the income limits.

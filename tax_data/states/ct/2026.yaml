@@ -7,9 +7,10 @@ data_status:
   status: final
   checked_on: "2026-09-21"
   unresolved_fields: []
+filing:
+  payment_url: "https://portal.ct.gov/DRS/myconneCT/myconneCT"
 sources:
   rates: {title: "2026 Form CT-1040ES", url: "https://portal.ct.gov/-/media/drs/forms/2025/income/ct1040es-flat0126.pdf"}
-  payment: {title: "Connecticut myconneCT", url: "https://portal.ct.gov/DRS/myconneCT/myconneCT"}
 tax_base: {starting_point: connecticut_adjusted_gross_income, local_income_taxes_included: false}
 standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
 brackets:

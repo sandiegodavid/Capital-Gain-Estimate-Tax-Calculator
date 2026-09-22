@@ -5,14 +5,24 @@ currency: USD
 tax_scope: broad_individual_income_tax
 data_status:
   status: provisional
-  checked_on: "2026-09-21"
-  unresolved_fields: [standard_deduction, personal_exemption]
-  note: "The Department's 2026 preliminary withholding schedule supplies the brackets; the latest final deduction and exemption amounts are tax year 2025."
+  checked_on: '2026-09-21'
+  unresolved_fields:
+  - standard_deduction
+  - personal_exemption
+  note: The Department's 2026 preliminary withholding schedule supplies the brackets; the latest final deduction and exemption
+    amounts are tax year 2025.
+filing:
+  payment_url: https://tax.vermont.gov/individuals/pay
 sources:
-  rates: {title: "Vermont 2026 preliminary income-tax withholding instructions", url: "https://tax.vermont.gov/sites/tax/files/documents/IN-114-Instr-2026.pdf"}
-  capital_gains: {title: "32 V.S.A. section 5811", url: "https://legislature.vermont.gov/statutes/section/32/151/05811"}
-  payment: {title: "Vermont individual payment", url: "https://tax.vermont.gov/individuals/pay"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_vermont_adjustments, local_income_taxes_included: false}
+  rates:
+    title: Vermont 2026 preliminary income-tax withholding instructions
+    url: https://tax.vermont.gov/sites/tax/files/documents/IN-114-Instr-2026.pdf
+  capital_gains:
+    title: 32 V.S.A. section 5811
+    url: https://legislature.vermont.gov/statutes/section/32/151/05811
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_vermont_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: false
@@ -25,19 +35,78 @@ standard_deduction:
   additional_65_or_blind: 1250
 brackets:
   ordinary:
-    single: [{bracket: 50750, rate: 3.35}, {bracket: 122850, rate: 6.6}, {bracket: 256300, rate: 7.6}, {bracket: null, rate: 8.75}]
-    married_filing_jointly: &joint [{bracket: 84700, rate: 3.35}, {bracket: 204750, rate: 6.6}, {bracket: 312050, rate: 7.6}, {bracket: null, rate: 8.75}]
-    married_filing_separately: [{bracket: 42350, rate: 3.35}, {bracket: 102375, rate: 6.6}, {bracket: 156025, rate: 7.6}, {bracket: null, rate: 8.75}]
-    head_of_household: [{bracket: 68000, rate: 3.35}, {bracket: 175500, rate: 6.6}, {bracket: 284150, rate: 7.6}, {bracket: null, rate: 8.75}]
-    qualifying_surviving_spouse: *joint
+    single:
+    - bracket: 50750
+      rate: 3.35
+    - bracket: 122850
+      rate: 6.6
+    - bracket: 256300
+      rate: 7.6
+    - bracket: null
+      rate: 8.75
+    married_filing_jointly: &id001
+    - bracket: 84700
+      rate: 3.35
+    - bracket: 204750
+      rate: 6.6
+    - bracket: 312050
+      rate: 7.6
+    - bracket: null
+      rate: 8.75
+    married_filing_separately:
+    - bracket: 42350
+      rate: 3.35
+    - bracket: 102375
+      rate: 6.6
+    - bracket: 156025
+      rate: 7.6
+    - bracket: null
+      rate: 8.75
+    head_of_household:
+    - bracket: 68000
+      rate: 3.35
+    - bracket: 175500
+      rate: 6.6
+    - bracket: 284150
+      rate: 7.6
+    - bracket: null
+      rate: 8.75
+    qualifying_surviving_spouse: *id001
 capital_gains:
   treatment: alternative_exclusion_then_ordinary_schedule
   calculation_supported: false
-  alternatives: [{fixed_exclusion: 5000}, {percent_of_qualifying_gain: 40}]
-  note: "The 40% alternative is limited to qualifying assets held more than three years and excludes categories such as most publicly traded stocks and bonds; statutory caps apply."
+  alternatives:
+  - fixed_exclusion: 5000
+  - percent_of_qualifying_gain: 40
+  note: The 40% alternative is limited to qualifying assets held more than three years and excludes categories such as most
+    publicly traded stocks and bonds; statutory caps apply.
 dependent_benefits:
-  - {name: personal_exemption_for_dependent, type: deduction, source_tax_year: 2025, amount_per_dependent: 5300}
+- id: personal_exemption_for_dependent
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 5300
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2025
+  source: rates
+  status: provisional
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits:
-  - {name: state_earned_income_tax_credit, type: federal_percentage, eligibility_tests_required: true}
+- name: state_earned_income_tax_credit
+  type: federal_percentage
+  eligibility_tests_required: true
 calculation_notes:
-  - "If federal AGI exceeds $150,000, Vermont's minimum-tax comparison may apply."
+- If federal AGI exceeds $150,000, Vermont's minimum-tax comparison may apply.

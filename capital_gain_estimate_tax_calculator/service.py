@@ -7,9 +7,10 @@ from datetime import datetime
 from pathlib import Path
 
 from .audit import write_audit_files
-from .excel_export import build_workbook
+from .excel_export import XlsxReportWriter
 from .models import CENT, NormalizedReport, ReportError, reconciliation_difference, totals
 from .normalizer import normalize_sources
+from .report_document import ReportBuilder
 
 
 def default_output_dir(input_dir: Path) -> Path:
@@ -24,7 +25,10 @@ def report_summary(report: NormalizedReport, output_path: Path) -> dict[str, obj
     return {
         "report_year": report.report_year,
         "records": len(report.lots),
-        "source_counts": {source: sum(lot.source_name == source for lot in report.lots) for source in sorted({lot.source_name for lot in report.lots})},
+        "source_counts": {
+            source: sum(lot.source_name == source for lot in report.lots)
+            for source in sorted({lot.source_name for lot in report.lots})
+        },
         "earliest_sale": min(lot.sale_date for lot in report.lots).isoformat(),
         "latest_sale": max(lot.sale_date for lot in report.lots).isoformat(),
         "totals_usd": {key: str(value.quantize(CENT)) for key, value in values.items()},
@@ -55,7 +59,8 @@ def generate_report(
         archive.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         shutil.copy2(output_path, archive / f"{output_path.stem}-{stamp}{output_path.suffix}")
-    build_workbook(report, output_path)
+    document = ReportBuilder().build(report)
+    XlsxReportWriter().write(document, output_path)
     summary = report_summary(report, output_path)
     if keep_audit_files:
         write_audit_files(report, destination_dir / "audit" / str(report.report_year), summary)

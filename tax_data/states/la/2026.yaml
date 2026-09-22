@@ -4,10 +4,11 @@ abbreviation: LA
 currency: USD
 tax_scope: broad_individual_income_tax
 data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+filing:
+  payment_url: "https://revenue.louisiana.gov/file-pay-online/"
 sources:
   rules: {title: "2026 Louisiana Form IT-540ES instructions", url: "https://dam.ldr.la.gov/taxforms/IT540ESi-2026.pdf"}
   capital_gains: {title: "Louisiana income-tax reform FAQ", url: "https://revenue.louisiana.gov/tax-education-and-faqs/faqs/income-tax-reform/can-i-claim-the-net-capital-gains-deduction-for-sales-occurring-on-or-after-january-1-2025/"}
-  payment: {title: "Louisiana file and pay", url: "https://revenue.louisiana.gov/file-pay-online/"}
 tax_base: {starting_point: federal_adjusted_gross_income_with_louisiana_modifications, local_income_taxes_included: false}
 standard_deduction:
   type: state_fixed

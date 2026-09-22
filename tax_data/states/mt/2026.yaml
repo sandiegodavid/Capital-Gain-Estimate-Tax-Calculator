@@ -4,9 +4,10 @@ abbreviation: MT
 currency: USD
 tax_scope: broad_individual_income_tax
 data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+filing:
+  payment_url: "https://tap.dor.mt.gov/"
 sources:
   rules: {title: "Montana House Bill 337 tax changes", url: "https://revenue.mt.gov/news/recent-news/HB-337"}
-  payment: {title: "Montana TransAction Portal", url: "https://tap.dor.mt.gov/"}
 tax_base: {starting_point: federal_taxable_income_with_montana_adjustments, local_income_taxes_included: false}
 standard_deduction:
   type: federal_in_tax_base

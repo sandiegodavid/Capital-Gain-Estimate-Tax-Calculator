@@ -3,11 +3,19 @@ jurisdiction: Georgia
 abbreviation: GA
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://dor.georgia.gov/taxes/how-do-i-make-tax-payment
 sources:
-  rules: {title: "Georgia important tax updates", url: "https://dor.georgia.gov/taxes/important-tax-updates"}
-  payment: {title: "Georgia tax payment", url: "https://dor.georgia.gov/taxes/how-do-i-make-tax-payment"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_georgia_adjustments, local_income_taxes_included: false}
+  rules:
+    title: Georgia important tax updates
+    url: https://dor.georgia.gov/taxes/important-tax-updates
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_georgia_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -18,12 +26,38 @@ standard_deduction:
   qualifying_surviving_spouse: 30000
 brackets:
   ordinary:
-    single: &all [{bracket: null, rate: 4.99}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: null
+      rate: 4.99
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, amount_per_dependent: 5000}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 5000
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: true
 other_credits: []

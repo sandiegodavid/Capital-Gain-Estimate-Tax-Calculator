@@ -3,12 +3,22 @@ jurisdiction: Virginia
 abbreviation: VA
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://www.tax.virginia.gov/payments
 sources:
-  rules: {title: "Virginia new tax laws", url: "https://www.tax.virginia.gov/news/new-virginia-tax-laws"}
-  forms: {title: "Virginia early-release forms", url: "https://www.tax.virginia.gov/early-release-forms"}
-  payment: {title: "Virginia tax payments", url: "https://www.tax.virginia.gov/payments"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_virginia_adjustments, local_income_taxes_included: false}
+  rules:
+    title: Virginia new tax laws
+    url: https://www.tax.virginia.gov/news/new-virginia-tax-laws
+  forms:
+    title: Virginia early-release forms
+    url: https://www.tax.virginia.gov/early-release-forms
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_virginia_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -19,14 +29,46 @@ standard_deduction:
   qualifying_surviving_spouse: 17500
 brackets:
   ordinary:
-    single: &all [{bracket: 3000, rate: 2}, {bracket: 5000, rate: 3}, {bracket: 17000, rate: 5}, {bracket: null, rate: 5.75}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 3000
+      rate: 2
+    - bracket: 5000
+      rate: 3
+    - bracket: 17000
+      rate: 5
+    - bracket: null
+      rate: 5.75
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, amount_per_dependent: 930}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 930
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: true
 other_credits: []
 calculation_notes:
-  - "Taxpayer/spouse exemption is $930 each; age-65-or-blind exemption is $800 per qualification."
+- Taxpayer/spouse exemption is $930 each; age-65-or-blind exemption is $800 per qualification.

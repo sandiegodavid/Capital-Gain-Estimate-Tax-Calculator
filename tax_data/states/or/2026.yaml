@@ -5,15 +5,27 @@ currency: USD
 tax_scope: broad_individual_income_tax
 data_status:
   status: provisional
-  checked_on: "2026-09-21"
-  unresolved_fields: [ordinary_bracket_thresholds, exemption_credit]
-  note: "Oregon has published 2026 deduction/withholding guidance but not the final 2026 return rate chart; the latest 2025 thresholds are labeled below."
+  checked_on: '2026-09-21'
+  unresolved_fields:
+  - ordinary_bracket_thresholds
+  - exemption_credit
+  note: Oregon has published 2026 deduction/withholding guidance but not the final 2026 return rate chart; the latest 2025
+    thresholds are labeled below.
+filing:
+  payment_url: https://www.oregon.gov/dor/programs/individuals/Pages/Personal-income-tax-payments.aspx
 sources:
-  2026_deductions: {title: "2026 Oregon Form OR-W-4 instructions", url: "https://www.oregon.gov/dor/forms/FormsPubs/form-or-W-4-instr_101-402-1_2026.pdf"}
-  latest_rate_chart: {title: "Oregon personal income tax", url: "https://www.oregon.gov/dor/programs/individuals/pages/pit.aspx"}
-  2026_legislation: {title: "Oregon 2026 summary of legislation", url: "https://www.oregon.gov/dor/Pages/2026-summary-of-legislation.aspx"}
-  payment: {title: "Oregon personal income-tax payments", url: "https://www.oregon.gov/dor/programs/individuals/Pages/Personal-income-tax-payments.aspx"}
-tax_base: {starting_point: federal_taxable_income_with_oregon_modifications, local_income_taxes_included: false}
+  2026_deductions:
+    title: 2026 Oregon Form OR-W-4 instructions
+    url: https://www.oregon.gov/dor/forms/FormsPubs/form-or-W-4-instr_101-402-1_2026.pdf
+  latest_rate_chart:
+    title: Oregon personal income tax
+    url: https://www.oregon.gov/dor/programs/individuals/pages/pit.aspx
+  2026_legislation:
+    title: Oregon 2026 summary of legislation
+    url: https://www.oregon.gov/dor/Pages/2026-summary-of-legislation.aspx
+tax_base:
+  starting_point: federal_taxable_income_with_oregon_modifications
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -22,18 +34,63 @@ standard_deduction:
   married_filing_separately: 2900
   head_of_household: 4700
   qualifying_surviving_spouse: 5800
-  additional_65_or_blind: {unmarried: 1200, married_or_qualifying_surviving_spouse: 1000}
+  additional_65_or_blind:
+    unmarried: 1200
+    married_or_qualifying_surviving_spouse: 1000
 brackets:
   ordinary:
-    single: &single [{bracket: 4550, rate: 4.75}, {bracket: 11400, rate: 6.75}, {bracket: 125000, rate: 8.75}, {bracket: null, rate: 9.9}]
-    married_filing_jointly: &joint [{bracket: 9100, rate: 4.75}, {bracket: 22800, rate: 6.75}, {bracket: 250000, rate: 8.75}, {bracket: null, rate: 9.9}]
-    married_filing_separately: *single
-    head_of_household: *joint
-    qualifying_surviving_spouse: *joint
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 4550
+      rate: 4.75
+    - bracket: 11400
+      rate: 6.75
+    - bracket: 125000
+      rate: 8.75
+    - bracket: null
+      rate: 9.9
+    married_filing_jointly: &id002
+    - bracket: 9100
+      rate: 4.75
+    - bracket: 22800
+      rate: 6.75
+    - bracket: 250000
+      rate: 8.75
+    - bracket: null
+      rate: 9.9
+    married_filing_separately: *id001
+    head_of_household: *id002
+    qualifying_surviving_spouse: *id002
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: exemption_credit, type: nonrefundable_credit, source_tax_year: 2025, amount_per_dependent: 256, agi_limit_applies: true}
+- id: exemption_credit
+  benefit_type: nonrefundable_credit
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 256
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: true
+  source_tax_year: 2025
+  source: 2026_deductions
+  status: provisional
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits:
-  - {name: state_earned_income_tax_credit, type: federal_percentage, percent_of_federal_credit: 14, percent_with_dependent_under_age_3: 17}
+- name: state_earned_income_tax_credit
+  type: federal_percentage
+  percent_of_federal_credit: 14
+  percent_with_dependent_under_age_3: 17
 calculation_notes:
-  - "The ordinary bracket thresholds are source-year 2025 values and must not be treated as final 2026 thresholds."
+- The ordinary bracket thresholds are source-year 2025 values and must not be treated as final 2026 thresholds.

@@ -4,6 +4,7 @@ coverage:
   broad_individual_income_tax_states: 41
   capital_gains_excise_only_states: 1
   total_files: 42
+  dependent_benefits: {total: 37, calculation_supported: 13, unsupported_or_informational: 24}
 status_counts: {final: 29, provisional: 13}
 states:
   - {abbreviation: AL, jurisdiction: "Alabama", status: provisional, path: "tax_data/states/al/2026.yaml"}

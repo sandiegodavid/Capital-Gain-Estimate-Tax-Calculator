@@ -4,9 +4,10 @@ abbreviation: KY
 currency: USD
 tax_scope: broad_individual_income_tax
 data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+filing:
+  payment_url: "https://revenue.ky.gov/Collections/Pages/E-file-Payment-Options.aspx"
 sources:
   rules: {title: "Kentucky announces 2026 standard deduction", url: "https://revenue.ky.gov/News/Pages/Kentucky-DOR-Announces-2026-Standard-Deduction.aspx"}
-  payment: {title: "Kentucky e-file payment options", url: "https://revenue.ky.gov/Collections/Pages/E-file-Payment-Options.aspx"}
 tax_base: {starting_point: federal_adjusted_gross_income_with_kentucky_modifications, local_income_taxes_included: false}
 standard_deduction:
   type: state_fixed_per_return

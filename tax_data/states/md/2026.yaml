@@ -3,13 +3,25 @@ jurisdiction: Maryland
 abbreviation: MD
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://mdtaxconnect.gov/rptp/portal
 sources:
-  rates: {title: "Maryland Tax Alert - 2025 legislative changes", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/legal-publications/alerts/tax-alert-changes-to-standard-and-itemized-deductions-and-to-state-and-local-income-tax-rates-from-the-2025-legislative-session.pdf"}
-  2026_guidance: {title: "Maryland Tax Bulletin 58", url: "https://www.marylandcomptroller.gov/legal-library/tb-58-dec-29-2025.html"}
-  standard_deduction: {title: "2026 Maryland employer withholding guide", url: "https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/instructions/withholding/2026/withholding-guide.pdf"}
-  payment: {title: "Maryland Tax Connect", url: "https://mdtaxconnect.gov/rptp/portal"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_maryland_modifications, local_income_taxes_included: false}
+  rates:
+    title: Maryland Tax Alert - 2025 legislative changes
+    url: https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/legal-publications/alerts/tax-alert-changes-to-standard-and-itemized-deductions-and-to-state-and-local-income-tax-rates-from-the-2025-legislative-session.pdf
+  2026_guidance:
+    title: Maryland Tax Bulletin 58
+    url: https://www.marylandcomptroller.gov/legal-library/tb-58-dec-29-2025.html
+  standard_deduction:
+    title: 2026 Maryland employer withholding guide
+    url: https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/instructions/withholding/2026/withholding-guide.pdf
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_maryland_modifications
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -20,19 +32,82 @@ standard_deduction:
   qualifying_surviving_spouse: 6800
 brackets:
   ordinary:
-    single: &single [{bracket: 1000, rate: 2}, {bracket: 2000, rate: 3}, {bracket: 3000, rate: 4}, {bracket: 100000, rate: 4.75}, {bracket: 125000, rate: 5}, {bracket: 150000, rate: 5.25}, {bracket: 250000, rate: 5.5}, {bracket: 500000, rate: 5.75}, {bracket: 1000000, rate: 6.25}, {bracket: null, rate: 6.5}]
-    married_filing_jointly: &joint [{bracket: 1000, rate: 2}, {bracket: 2000, rate: 3}, {bracket: 3000, rate: 4}, {bracket: 150000, rate: 4.75}, {bracket: 175000, rate: 5}, {bracket: 225000, rate: 5.25}, {bracket: 300000, rate: 5.5}, {bracket: 600000, rate: 5.75}, {bracket: 1200000, rate: 6.25}, {bracket: null, rate: 6.5}]
-    married_filing_separately: *single
-    head_of_household: *joint
-    qualifying_surviving_spouse: *joint
+    single: &id001
+    - bracket: 1000
+      rate: 2
+    - bracket: 2000
+      rate: 3
+    - bracket: 3000
+      rate: 4
+    - bracket: 100000
+      rate: 4.75
+    - bracket: 125000
+      rate: 5
+    - bracket: 150000
+      rate: 5.25
+    - bracket: 250000
+      rate: 5.5
+    - bracket: 500000
+      rate: 5.75
+    - bracket: 1000000
+      rate: 6.25
+    - bracket: null
+      rate: 6.5
+    married_filing_jointly: &id002
+    - bracket: 1000
+      rate: 2
+    - bracket: 2000
+      rate: 3
+    - bracket: 3000
+      rate: 4
+    - bracket: 150000
+      rate: 4.75
+    - bracket: 175000
+      rate: 5
+    - bracket: 225000
+      rate: 5.25
+    - bracket: 300000
+      rate: 5.5
+    - bracket: 600000
+      rate: 5.75
+    - bracket: 1200000
+      rate: 6.25
+    - bracket: null
+      rate: 6.5
+    married_filing_separately: *id001
+    head_of_household: *id002
+    qualifying_surviving_spouse: *id002
 capital_gains:
   treatment: ordinary_schedule_plus_surtax
   surtax_rate: 2
   surtax_federal_agi_threshold: 350000
   calculation_supported: false
-  note: "The 2% capital-gains surtax applies above the federal-AGI threshold, with statutory exclusions that require transaction-level data."
+  note: The 2% capital-gains surtax applies above the federal-AGI threshold, with statutory exclusions that require transaction-level
+    data.
 dependent_benefits:
-  - {name: dependent_personal_exemption, type: deduction, maximum_per_dependent: 3200, agi_phaseout_applies: true}
+- id: dependent_personal_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 3200
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rates
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []
 calculation_notes:
-  - "County and Baltimore City income taxes are excluded."
+- County and Baltimore City income taxes are excluded.

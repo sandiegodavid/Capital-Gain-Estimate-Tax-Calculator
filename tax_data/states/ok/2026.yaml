@@ -3,11 +3,19 @@ jurisdiction: Oklahoma
 abbreviation: OK
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://oklahoma.gov/tax/individuals/pay-taxes.html
 sources:
-  rules: {title: "Oklahoma 2025 legislative update", url: "https://oklahoma.gov/content/dam/ok/en/tax/documents/resources/publications/legislation/2025LegislativeUpdate.pdf"}
-  payment: {title: "Oklahoma individual tax payment", url: "https://oklahoma.gov/tax/individuals/pay-taxes.html"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_oklahoma_adjustments, local_income_taxes_included: false}
+  rules:
+    title: Oklahoma 2025 legislative update
+    url: https://oklahoma.gov/content/dam/ok/en/tax/documents/resources/publications/legislation/2025LegislativeUpdate.pdf
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_oklahoma_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -18,15 +26,53 @@ standard_deduction:
   qualifying_surviving_spouse: 12700
 brackets:
   ordinary:
-    single: &single [{bracket: 3750, rate: 0}, {bracket: 4900, rate: 2.5}, {bracket: 7200, rate: 3.5}, {bracket: null, rate: 4.5}]
-    married_filing_jointly: &joint [{bracket: 7500, rate: 0}, {bracket: 9800, rate: 2.5}, {bracket: 14400, rate: 3.5}, {bracket: null, rate: 4.5}]
-    married_filing_separately: *single
-    head_of_household: *joint
-    qualifying_surviving_spouse: *joint
+    single: &id001
+    - bracket: 3750
+      rate: 0
+    - bracket: 4900
+      rate: 2.5
+    - bracket: 7200
+      rate: 3.5
+    - bracket: null
+      rate: 4.5
+    married_filing_jointly: &id002
+    - bracket: 7500
+      rate: 0
+    - bracket: 9800
+      rate: 2.5
+    - bracket: 14400
+      rate: 3.5
+    - bracket: null
+      rate: 4.5
+    married_filing_separately: *id001
+    head_of_household: *id002
+    qualifying_surviving_spouse: *id002
 capital_gains:
   treatment: ordinary_schedule_with_conditional_deduction
   calculation_supported: false
-  note: "A deduction may apply to qualifying Oklahoma property or entity interests after statutory holding periods."
+  note: A deduction may apply to qualifying Oklahoma property or entity interests after statutory holding periods.
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, amount_per_dependent: 1000}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 1000
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: true
 other_credits: []

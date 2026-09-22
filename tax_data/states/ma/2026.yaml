@@ -3,28 +3,76 @@ jurisdiction: Massachusetts
 abbreviation: MA
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://www.mass.gov/info-details/e-file-and-pay-your-ma-personal-income-taxes
 sources:
-  surtax: {title: "Massachusetts 4% surtax", url: "https://www.mass.gov/info-details/massachusetts-4-surtax-on-taxable-income"}
-  rates: {title: "Massachusetts personal income-tax rates", url: "https://www.mass.gov/info-details/massachusetts-tax-rates"}
-  payment: {title: "Massachusetts personal income-tax payment", url: "https://www.mass.gov/info-details/e-file-and-pay-your-ma-personal-income-taxes"}
-tax_base: {starting_point: massachusetts_gross_income_by_class, local_income_taxes_included: false}
-standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
+  surtax:
+    title: Massachusetts 4% surtax
+    url: https://www.mass.gov/info-details/massachusetts-4-surtax-on-taxable-income
+  rates:
+    title: Massachusetts personal income-tax rates
+    url: https://www.mass.gov/info-details/massachusetts-tax-rates
+tax_base:
+  starting_point: massachusetts_gross_income_by_class
+  local_income_taxes_included: false
+standard_deduction:
+  type: none
+  calculation_supported: true
+  single: 0
+  married_filing_jointly: 0
+  married_filing_separately: 0
+  head_of_household: 0
+  qualifying_surviving_spouse: 0
 brackets:
   ordinary:
-    single: &all [{bracket: 1107750, rate: 5}, {bracket: null, rate: 9}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
+    single: &id001
+    - bracket: 1107750
+      rate: 5
+    - bracket: null
+      rate: 9
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
   short_term_capital_gains:
-    all_statuses: [{bracket: 1107750, rate: 8.5}, {bracket: null, rate: 12.5}]
+    all_statuses:
+    - bracket: 1107750
+      rate: 8.5
+    - bracket: null
+      rate: 12.5
 capital_gains:
   treatment: separate_short_term_rate
   calculation_supported: false
-  note: "Most long-term gains are 5%; short-term gains are 8.5%; the 4% surtax applies above $1,107,750 across taxable income, and collectibles may use a 12% class rate."
+  note: Most long-term gains are 5%; short-term gains are 8.5%; the 4% surtax applies above $1,107,750 across taxable income,
+    and collectibles may use a 12% class rate.
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, amount_per_dependent: 1000}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 1000
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: surtax
+  status: final
+  calculation_supported: true
 other_credits: []
 calculation_notes:
-  - "Personal exemptions: $4,400 single/MFS, $6,800 HOH, and $8,800 joint/qualifying surviving spouse."
+- 'Personal exemptions: $4,400 single/MFS, $6,800 HOH, and $8,800 joint/qualifying surviving spouse.'

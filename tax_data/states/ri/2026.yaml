@@ -3,11 +3,19 @@ jurisdiction: Rhode Island
 abbreviation: RI
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://tax.ri.gov/online-services/make-payment-online
 sources:
-  rules: {title: "Rhode Island 2026 inflation adjustments", url: "https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-11/ADV_2025_22_Inflation_Adjustments.pdf"}
-  payment: {title: "Rhode Island online payment", url: "https://tax.ri.gov/online-services/make-payment-online"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_rhode_island_modifications, local_income_taxes_included: false}
+  rules:
+    title: Rhode Island 2026 inflation adjustments
+    url: https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-11/ADV_2025_22_Inflation_Adjustments.pdf
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_rhode_island_modifications
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed_with_phaseout
   calculation_supported: false
@@ -18,14 +26,44 @@ standard_deduction:
   qualifying_surviving_spouse: 22400
 brackets:
   ordinary:
-    single: &all [{bracket: 82050, rate: 3.75}, {bracket: 186450, rate: 4.75}, {bracket: null, rate: 5.99}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 82050
+      rate: 3.75
+    - bracket: 186450
+      rate: 4.75
+    - bracket: null
+      rate: 5.99
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: personal_and_dependency_exemption, type: deduction, amount_per_person: 5250, phaseout_applies: true}
+- id: personal_and_dependency_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: null
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []
 calculation_notes:
-  - "Standard deduction and exemptions phase out over AGI $261,000-$290,800 using $7,450 increments."
+- Standard deduction and exemptions phase out over AGI $261,000-$290,800 using $7,450 increments.

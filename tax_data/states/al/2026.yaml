@@ -5,36 +5,95 @@ currency: USD
 tax_scope: broad_individual_income_tax
 data_status:
   status: provisional
-  checked_on: "2026-09-21"
-  unresolved_fields: [standard_deduction]
-  note: "Rates and exemptions are current; the deduction formula is carried from the latest 2025 return instructions pending final 2026 instructions."
+  checked_on: '2026-09-21'
+  unresolved_fields:
+  - standard_deduction
+  note: Rates and exemptions are current; the deduction formula is carried from the latest 2025 return instructions pending
+    final 2026 instructions.
+filing:
+  payment_url: https://www.revenue.alabama.gov/make-a-payment/
 sources:
-  rates: {title: "2026 Form 40ES", url: "https://www.revenue.alabama.gov/wp-content/uploads/2026/01/26f40esblk.pdf"}
-  deductions_and_dependents: {title: "2025 Form 40 instructions", url: "https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40nrbk.pdf"}
-  payment: {title: "Alabama Department of Revenue payment page", url: "https://www.revenue.alabama.gov/make-a-payment/"}
-tax_base: {starting_point: state_adjusted_gross_income, local_income_taxes_included: false}
+  rates:
+    title: 2026 Form 40ES
+    url: https://www.revenue.alabama.gov/wp-content/uploads/2026/01/26f40esblk.pdf
+  deductions_and_dependents:
+    title: 2025 Form 40 instructions
+    url: https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40nrbk.pdf
+tax_base:
+  starting_point: state_adjusted_gross_income
+  local_income_taxes_included: false
 standard_deduction:
   type: state_formula
   calculation_supported: false
-  single: {maximum: 3000, minimum: 2500, phaseout_begins_agi: 26000}
-  married_filing_jointly: {maximum: 8500, minimum: 5000, phaseout_begins_agi: 26000}
-  married_filing_separately: {maximum: 4250, minimum: 2500, phaseout_begins_agi: 13000}
-  head_of_household: {maximum: 5200, minimum: 2500, phaseout_begins_agi: 26000}
-  qualifying_surviving_spouse: {maximum: 5200, minimum: 2500, phaseout_begins_agi: 26000}
+  single:
+    maximum: 3000
+    minimum: 2500
+    phaseout_begins_agi: 26000
+  married_filing_jointly:
+    maximum: 8500
+    minimum: 5000
+    phaseout_begins_agi: 26000
+  married_filing_separately:
+    maximum: 4250
+    minimum: 2500
+    phaseout_begins_agi: 13000
+  head_of_household:
+    maximum: 5200
+    minimum: 2500
+    phaseout_begins_agi: 26000
+  qualifying_surviving_spouse:
+    maximum: 5200
+    minimum: 2500
+    phaseout_begins_agi: 26000
 brackets:
   ordinary:
-    single: &single [{bracket: 500, rate: 2}, {bracket: 3000, rate: 4}, {bracket: null, rate: 5}]
-    married_filing_jointly: &joint [{bracket: 1000, rate: 2}, {bracket: 6000, rate: 4}, {bracket: null, rate: 5}]
-    married_filing_separately: *single
-    head_of_household: *single
-    qualifying_surviving_spouse: *joint
+    single: &id001
+    - bracket: 500
+      rate: 2
+    - bracket: 3000
+      rate: 4
+    - bracket: null
+      rate: 5
+    married_filing_jointly: &id002
+    - bracket: 1000
+      rate: 2
+    - bracket: 6000
+      rate: 4
+    - bracket: null
+      rate: 5
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id002
 capital_gains:
   treatment: ordinary_schedule
   calculation_supported: true
-  note: "General net gains use the ordinary schedule; a narrow exemption applies to qualifying exchanges of precious-metal bullion."
+  note: General net gains use the ordinary schedule; a narrow exemption applies to qualifying exchanges of precious-metal
+    bullion.
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, amount_by_agi: {"0-50000": 1000, "50001-100000": 500, "over_100000": 300}}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: null
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rates
+  status: provisional
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []
 calculation_notes:
-  - "Personal exemption is $1,500 for single/MFS and $3,000 for joint/HOH/qualifying surviving spouse."
-  - "Use the final 2026 Form 40 instructions before enabling the standard-deduction calculation."
+- Personal exemption is $1,500 for single/MFS and $3,000 for joint/HOH/qualifying surviving spouse.
+- Use the final 2026 Form 40 instructions before enabling the standard-deduction calculation.

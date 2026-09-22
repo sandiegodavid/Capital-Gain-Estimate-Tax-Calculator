@@ -3,24 +3,117 @@ jurisdiction: New Jersey
 abbreviation: NJ
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://www.nj.gov/treasury/taxation/onlinepayment.shtml
 sources:
-  rates: {title: "New Jersey tax tables and rate schedules", url: "https://www.nj.gov/treasury/taxation/taxtables.shtml"}
-  exemptions: {title: "New Jersey exemptions and deductions", url: "https://www.nj.gov/treasury/taxation/njit2.shtml"}
-  payment: {title: "New Jersey online payment", url: "https://www.nj.gov/treasury/taxation/onlinepayment.shtml"}
-tax_base: {starting_point: new_jersey_gross_income, local_income_taxes_included: false}
-standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
+  rates:
+    title: New Jersey tax tables and rate schedules
+    url: https://www.nj.gov/treasury/taxation/taxtables.shtml
+  exemptions:
+    title: New Jersey exemptions and deductions
+    url: https://www.nj.gov/treasury/taxation/njit2.shtml
+tax_base:
+  starting_point: new_jersey_gross_income
+  local_income_taxes_included: false
+standard_deduction:
+  type: none
+  calculation_supported: true
+  single: 0
+  married_filing_jointly: 0
+  married_filing_separately: 0
+  head_of_household: 0
+  qualifying_surviving_spouse: 0
 brackets:
   ordinary:
-    single: &single [{bracket: 20000, rate: 1.4}, {bracket: 35000, rate: 1.75}, {bracket: 40000, rate: 3.5}, {bracket: 75000, rate: 5.525}, {bracket: 500000, rate: 6.37}, {bracket: 1000000, rate: 8.97}, {bracket: null, rate: 10.75}]
-    married_filing_jointly: &joint [{bracket: 20000, rate: 1.4}, {bracket: 50000, rate: 1.75}, {bracket: 70000, rate: 2.45}, {bracket: 80000, rate: 3.5}, {bracket: 150000, rate: 5.525}, {bracket: 500000, rate: 6.37}, {bracket: 1000000, rate: 8.97}, {bracket: null, rate: 10.75}]
-    married_filing_separately: *single
-    head_of_household: *joint
-    qualifying_surviving_spouse: *joint
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 20000
+      rate: 1.4
+    - bracket: 35000
+      rate: 1.75
+    - bracket: 40000
+      rate: 3.5
+    - bracket: 75000
+      rate: 5.525
+    - bracket: 500000
+      rate: 6.37
+    - bracket: 1000000
+      rate: 8.97
+    - bracket: null
+      rate: 10.75
+    married_filing_jointly: &id002
+    - bracket: 20000
+      rate: 1.4
+    - bracket: 50000
+      rate: 1.75
+    - bracket: 70000
+      rate: 2.45
+    - bracket: 80000
+      rate: 3.5
+    - bracket: 150000
+      rate: 5.525
+    - bracket: 500000
+      rate: 6.37
+    - bracket: 1000000
+      rate: 8.97
+    - bracket: null
+      rate: 10.75
+    married_filing_separately: *id001
+    head_of_household: *id002
+    qualifying_surviving_spouse: *id002
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, amount_per_dependent: 1500, additional_college_dependent_amount: 1000}
-  - {name: child_tax_credit, type: refundable_credit, maximum_per_child_age_5_or_younger: 1000, income_limit: 80000, unavailable_to_married_filing_separately: true}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 1500
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rates
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
+- id: child_tax_credit
+  benefit_type: refundable_credit
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_child
+    amount: null
+  phaseout:
+    calculation_supported: false
+  refundability: true
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rates
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []
 calculation_notes:
-  - "Taxpayer and spouse exemptions are $1,000 each; veteran exemption is $6,000 and age/blind exemption is $1,000."
+- Taxpayer and spouse exemptions are $1,000 each; veteran exemption is $6,000 and age/blind exemption is $1,000.

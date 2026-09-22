@@ -8,9 +8,10 @@ data_status:
   checked_on: "2026-09-21"
   unresolved_fields: [effective_tax_rate]
   note: "4.4% is the statutory rate; a temporary TABOR rate reduction, if triggered, is determined after the tax year."
+filing:
+  payment_url: "https://tax.colorado.gov/pay-individual-income-tax"
 sources:
   rates: {title: "Colorado Individual Income Tax Guide, January 2026", url: "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_Jan_2026.pdf"}
-  payment: {title: "Colorado individual income-tax payment", url: "https://tax.colorado.gov/pay-individual-income-tax"}
 tax_base: {starting_point: federal_taxable_income_with_colorado_modifications, local_income_taxes_included: false}
 standard_deduction:
   type: federal_in_tax_base

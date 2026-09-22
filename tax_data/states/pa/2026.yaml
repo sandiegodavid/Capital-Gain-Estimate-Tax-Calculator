@@ -4,9 +4,10 @@ abbreviation: PA
 currency: USD
 tax_scope: broad_individual_income_tax
 data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+filing:
+  payment_url: "https://www.pa.gov/services/revenue/make-a-personal-income-tax-payment"
 sources:
   rules: {title: "Pennsylvania personal income tax", url: "https://www.pa.gov/agencies/revenue/resources/tax-types-and-information/personal-income-tax"}
-  payment: {title: "Pennsylvania personal income-tax payment", url: "https://www.pa.gov/services/revenue/make-a-personal-income-tax-payment"}
 tax_base: {starting_point: pennsylvania_taxable_income_by_class, local_income_taxes_included: false}
 standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
 brackets:

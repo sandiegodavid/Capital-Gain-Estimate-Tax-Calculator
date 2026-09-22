@@ -5,6 +5,5 @@ from __future__ import annotations
 
 from capital_gain_estimate_tax_calculator.cli import main
 
-
 if __name__ == "__main__":
     raise SystemExit(main())

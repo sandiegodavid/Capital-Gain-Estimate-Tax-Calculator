@@ -5,14 +5,24 @@ currency: USD
 tax_scope: broad_individual_income_tax
 data_status:
   status: provisional
-  checked_on: "2026-09-21"
-  unresolved_fields: [ordinary_brackets, personal_and_dependent_credits]
-  note: "The 2026 estimated-tax instructions publish deduction estimates but direct filers to the latest available tax schedule; 2025 brackets and credits are retained and labeled."
+  checked_on: '2026-09-21'
+  unresolved_fields:
+  - ordinary_brackets
+  - personal_and_dependent_credits
+  note: The 2026 estimated-tax instructions publish deduction estimates but direct filers to the latest available tax schedule;
+    2025 brackets and credits are retained and labeled.
+filing:
+  payment_url: https://www.ftb.ca.gov/pay/index.html
 sources:
-  estimates: {title: "2026 Form 540-ES instructions", url: "https://www.ftb.ca.gov/forms/2026/2026-540-es-instructions.pdf"}
-  rates_and_credits: {title: "2025 California Form 540 booklet", url: "https://www.ftb.ca.gov/forms/2025/2025-540-booklet.html"}
-  payment: {title: "California FTB payments", url: "https://www.ftb.ca.gov/pay/index.html"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_california_adjustments, local_income_taxes_included: false}
+  estimates:
+    title: 2026 Form 540-ES instructions
+    url: https://www.ftb.ca.gov/forms/2026/2026-540-es-instructions.pdf
+  rates_and_credits:
+    title: 2025 California Form 540 booklet
+    url: https://www.ftb.ca.gov/forms/2025/2025-540-booklet.html
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_california_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -23,16 +33,101 @@ standard_deduction:
   qualifying_surviving_spouse: 11412
 brackets:
   ordinary:
-    single: &single [{bracket: 11079, rate: 1}, {bracket: 26264, rate: 2}, {bracket: 41452, rate: 4}, {bracket: 57542, rate: 6}, {bracket: 72724, rate: 8}, {bracket: 371479, rate: 9.3}, {bracket: 445771, rate: 10.3}, {bracket: 742953, rate: 11.3}, {bracket: null, rate: 12.3}]
-    married_filing_jointly: &joint [{bracket: 22158, rate: 1}, {bracket: 52528, rate: 2}, {bracket: 82904, rate: 4}, {bracket: 115084, rate: 6}, {bracket: 145448, rate: 8}, {bracket: 742958, rate: 9.3}, {bracket: 891542, rate: 10.3}, {bracket: 1485906, rate: 11.3}, {bracket: null, rate: 12.3}]
-    married_filing_separately: *single
-    head_of_household: [{bracket: 22173, rate: 1}, {bracket: 52530, rate: 2}, {bracket: 67716, rate: 4}, {bracket: 83805, rate: 6}, {bracket: 98990, rate: 8}, {bracket: 505208, rate: 9.3}, {bracket: 606251, rate: 10.3}, {bracket: 1010417, rate: 11.3}, {bracket: null, rate: 12.3}]
-    qualifying_surviving_spouse: *joint
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true, note: "California taxes short- and long-term capital gains as ordinary income."}
+    single: &id001
+    - bracket: 11079
+      rate: 1
+    - bracket: 26264
+      rate: 2
+    - bracket: 41452
+      rate: 4
+    - bracket: 57542
+      rate: 6
+    - bracket: 72724
+      rate: 8
+    - bracket: 371479
+      rate: 9.3
+    - bracket: 445771
+      rate: 10.3
+    - bracket: 742953
+      rate: 11.3
+    - bracket: null
+      rate: 12.3
+    married_filing_jointly: &id002
+    - bracket: 22158
+      rate: 1
+    - bracket: 52528
+      rate: 2
+    - bracket: 82904
+      rate: 4
+    - bracket: 115084
+      rate: 6
+    - bracket: 145448
+      rate: 8
+    - bracket: 742958
+      rate: 9.3
+    - bracket: 891542
+      rate: 10.3
+    - bracket: 1485906
+      rate: 11.3
+    - bracket: null
+      rate: 12.3
+    married_filing_separately: *id001
+    head_of_household:
+    - bracket: 22173
+      rate: 1
+    - bracket: 52530
+      rate: 2
+    - bracket: 67716
+      rate: 4
+    - bracket: 83805
+      rate: 6
+    - bracket: 98990
+      rate: 8
+    - bracket: 505208
+      rate: 9.3
+    - bracket: 606251
+      rate: 10.3
+    - bracket: 1010417
+      rate: 11.3
+    - bracket: null
+      rate: 12.3
+    qualifying_surviving_spouse: *id002
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
+  note: California taxes short- and long-term capital gains as ordinary income.
 dependent_benefits:
-  - {name: dependent_exemption_credit, type: nonrefundable_credit, source_tax_year: 2025, maximum_per_dependent: 475, phaseout_applies: true}
+- id: dependent_exemption_credit
+  benefit_type: nonrefundable_credit
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 475
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: true
+  source_tax_year: 2025
+  source: rates_and_credits
+  status: provisional
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits:
-  - {name: personal_exemption_credit, type: nonrefundable_credit, source_tax_year: 2025, amount: {single_or_separate: 153, joint_or_qualifying_surviving_spouse: 306}, phaseout_applies: true}
+- name: personal_exemption_credit
+  type: nonrefundable_credit
+  source_tax_year: 2025
+  amount:
+    single_or_separate: 153
+    joint_or_qualifying_surviving_spouse: 306
+  phaseout_applies: true
 calculation_notes:
-  - "Add the 1% Mental Health Services Tax to taxable income over $1,000,000."
-  - "Do not treat the source-year 2025 brackets or credits as final 2026 values."
+- Add the 1% Mental Health Services Tax to taxable income over $1,000,000.
+- Do not treat the source-year 2025 brackets or credits as final 2026 values.

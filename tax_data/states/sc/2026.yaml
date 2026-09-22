@@ -5,42 +5,96 @@ currency: USD
 tax_scope: broad_individual_income_tax
 data_status:
   status: provisional
-  checked_on: "2026-09-21"
-  unresolved_fields: [dependent_exemption]
-  note: "The 2026 tax formula and deduction are final; the dependent exemption retains the latest published 2025 amount."
+  checked_on: '2026-09-21'
+  unresolved_fields:
+  - dependent_exemption
+  note: The 2026 tax formula and deduction are final; the dependent exemption retains the latest published 2025 amount.
+filing:
+  payment_url: https://dor.sc.gov/iit/iit-file-pay-options
 sources:
-  rules: {title: "South Carolina Information Letter 26-20", url: "https://www.dor.sc.gov/sites/dor/files/policies/IL26-20.pdf"}
-  capital_gains: {title: "South Carolina individual income-tax FAQ", url: "https://www.dor.sc.gov/iit/prepare-you-file/iit-faqs"}
-  payment: {title: "South Carolina individual file and pay", url: "https://dor.sc.gov/iit/iit-file-pay-options"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_south_carolina_adjustments, local_income_taxes_included: false}
+  rules:
+    title: South Carolina Information Letter 26-20
+    url: https://www.dor.sc.gov/sites/dor/files/policies/IL26-20.pdf
+  capital_gains:
+    title: South Carolina individual income-tax FAQ
+    url: https://www.dor.sc.gov/iit/prepare-you-file/iit-faqs
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_south_carolina_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: state_formula
   name: south_carolina_income_adjusted_deduction
   calculation_supported: false
-  single: {maximum: 15000, full_through_agi: 40000, zero_at_agi: 95000}
-  married_filing_jointly: {maximum: 30000, full_through_agi: 80000, zero_at_agi: 190000}
-  married_filing_separately: {maximum: 15000, full_through_agi: 40000, zero_at_agi: 95000}
-  head_of_household: {maximum: 22500, full_through_agi: 60000, zero_at_agi: 142500}
-  qualifying_surviving_spouse: {maximum: 30000, full_through_agi: 80000, zero_at_agi: 190000}
+  single:
+    maximum: 15000
+    full_through_agi: 40000
+    zero_at_agi: 95000
+  married_filing_jointly:
+    maximum: 30000
+    full_through_agi: 80000
+    zero_at_agi: 190000
+  married_filing_separately:
+    maximum: 15000
+    full_through_agi: 40000
+    zero_at_agi: 95000
+  head_of_household:
+    maximum: 22500
+    full_through_agi: 60000
+    zero_at_agi: 142500
+  qualifying_surviving_spouse:
+    maximum: 30000
+    full_through_agi: 80000
+    zero_at_agi: 190000
 brackets:
   ordinary:
-    single: &all [{bracket: 29999, rate: 1.99}, {bracket: null, rate: 5.21}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
+    single: &id001
+    - bracket: 29999
+      rate: 1.99
+    - bracket: null
+      rate: 5.21
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
 tax_formula:
   calculation_supported: true
   bands:
-    - {taxable_income_up_to: 29999, tax: "1.99% of taxable income"}
-    - {taxable_income_up_to: null, tax: "5.21% of taxable income minus $966"}
+  - taxable_income_up_to: 29999
+    tax: 1.99% of taxable income
+  - taxable_income_up_to: null
+    tax: 5.21% of taxable income minus $966
 capital_gains:
   treatment: percentage_deduction_then_ordinary_formula
   net_long_term_capital_gain_deduction_percent: 44
   calculation_supported: true
 dependent_benefits:
-  - {name: dependent_exemption, type: deduction, source_tax_year: 2025, amount_per_dependent: 4930}
+- id: dependent_exemption
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 4930
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2025
+  source: rules
+  status: provisional
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits:
-  - {name: state_earned_income_tax_credit, type: federal_percentage_nonrefundable, percent_of_federal_credit: 125, maximum_credit: 200}
+- name: state_earned_income_tax_credit
+  type: federal_percentage_nonrefundable
+  percent_of_federal_credit: 125
+  maximum_credit: 200
 calculation_notes:
-  - "The income-adjusted deduction phaseout is rounded down to the next lower $10 as directed by Information Letter 26-20."
+- The income-adjusted deduction phaseout is rounded down to the next lower $10 as directed by Information Letter 26-20.

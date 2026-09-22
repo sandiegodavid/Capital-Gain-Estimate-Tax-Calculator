@@ -3,23 +3,83 @@ jurisdiction: West Virginia
 abbreviation: WV
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://tax.wv.gov/Individuals/ElectronicFiling/PaymentOptions/Pages/IndividualsPaymentOptions.aspx
 sources:
-  rules: {title: "West Virginia personal income-tax reduction", url: "https://tax.wv.gov/Individuals/Pages/PersonalIncomeTaxReductionBill.aspx"}
-  payment: {title: "West Virginia individual payment options", url: "https://tax.wv.gov/Individuals/ElectronicFiling/PaymentOptions/Pages/IndividualsPaymentOptions.aspx"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_west_virginia_adjustments, local_income_taxes_included: false}
-standard_deduction: {type: none, calculation_supported: true, single: 0, married_filing_jointly: 0, married_filing_separately: 0, head_of_household: 0, qualifying_surviving_spouse: 0}
+  rules:
+    title: West Virginia personal income-tax reduction
+    url: https://tax.wv.gov/Individuals/Pages/PersonalIncomeTaxReductionBill.aspx
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_west_virginia_adjustments
+  local_income_taxes_included: false
+standard_deduction:
+  type: none
+  calculation_supported: true
+  single: 0
+  married_filing_jointly: 0
+  married_filing_separately: 0
+  head_of_household: 0
+  qualifying_surviving_spouse: 0
 brackets:
   ordinary:
-    single: &all_except_separate [{bracket: 10000, rate: 2.11}, {bracket: 25000, rate: 2.81}, {bracket: 40000, rate: 3.16}, {bracket: 60000, rate: 4.22}, {bracket: null, rate: 4.58}]
-    married_filing_jointly: *all_except_separate
-    married_filing_separately: [{bracket: 5000, rate: 2.11}, {bracket: 12500, rate: 2.81}, {bracket: 20000, rate: 3.16}, {bracket: 30000, rate: 4.22}, {bracket: null, rate: 4.58}]
-    head_of_household: *all_except_separate
-    qualifying_surviving_spouse: *all_except_separate
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 10000
+      rate: 2.11
+    - bracket: 25000
+      rate: 2.81
+    - bracket: 40000
+      rate: 3.16
+    - bracket: 60000
+      rate: 4.22
+    - bracket: null
+      rate: 4.58
+    married_filing_jointly: *id001
+    married_filing_separately:
+    - bracket: 5000
+      rate: 2.11
+    - bracket: 12500
+      rate: 2.81
+    - bracket: 20000
+      rate: 3.16
+    - bracket: 30000
+      rate: 4.22
+    - bracket: null
+      rate: 4.58
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: personal_exemption_for_dependent, type: deduction, amount_per_dependent: 2000}
+- id: personal_exemption_for_dependent
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 2000
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []
 calculation_notes:
-  - "Personal exemption is $2,000 per eligible taxpayer/spouse; a taxpayer who can be claimed as a dependent generally receives $500."
-  - "A surviving-spouse exemption can add $2,000 under the limited two-year rule."
+- Personal exemption is $2,000 per eligible taxpayer/spouse; a taxpayer who can be claimed as a dependent generally receives
+  $500.
+- A surviving-spouse exemption can add $2,000 under the limited two-year rule.

@@ -3,11 +3,19 @@ jurisdiction: Hawaii
 abbreviation: HI
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://tax.hawaii.gov/eservices/
 sources:
-  rules: {title: "Hawaii Department of Taxation individual income-tax FAQ", url: "https://tax.hawaii.gov/faq/"}
-  payment: {title: "Hawaii tax e-services", url: "https://tax.hawaii.gov/eservices/"}
-tax_base: {starting_point: hawaii_adjusted_gross_income, local_income_taxes_included: false}
+  rules:
+    title: Hawaii Department of Taxation individual income-tax FAQ
+    url: https://tax.hawaii.gov/faq/
+tax_base:
+  starting_point: hawaii_adjusted_gross_income
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -18,12 +26,108 @@ standard_deduction:
   qualifying_surviving_spouse: 16000
 brackets:
   ordinary:
-    single: &single [{bracket: 2400, rate: 1.4}, {bracket: 4800, rate: 3.2}, {bracket: 9600, rate: 5.5}, {bracket: 14400, rate: 6.4}, {bracket: 19200, rate: 6.8}, {bracket: 24000, rate: 7.2}, {bracket: 36000, rate: 7.6}, {bracket: 48000, rate: 7.9}, {bracket: 150000, rate: 8.25}, {bracket: 175000, rate: 9}, {bracket: 200000, rate: 10}, {bracket: null, rate: 11}]
-    married_filing_jointly: &joint [{bracket: 4800, rate: 1.4}, {bracket: 9600, rate: 3.2}, {bracket: 19200, rate: 5.5}, {bracket: 28800, rate: 6.4}, {bracket: 38400, rate: 6.8}, {bracket: 48000, rate: 7.2}, {bracket: 72000, rate: 7.6}, {bracket: 96000, rate: 7.9}, {bracket: 300000, rate: 8.25}, {bracket: 350000, rate: 9}, {bracket: 400000, rate: 10}, {bracket: null, rate: 11}]
-    married_filing_separately: *single
-    head_of_household: [{bracket: 3600, rate: 1.4}, {bracket: 7200, rate: 3.2}, {bracket: 14400, rate: 5.5}, {bracket: 21600, rate: 6.4}, {bracket: 28800, rate: 6.8}, {bracket: 36000, rate: 7.2}, {bracket: 54000, rate: 7.6}, {bracket: 72000, rate: 7.9}, {bracket: 225000, rate: 8.25}, {bracket: 262500, rate: 9}, {bracket: 300000, rate: 10}, {bracket: null, rate: 11}]
-    qualifying_surviving_spouse: *joint
-capital_gains: {treatment: ordinary_schedule, calculation_supported: true}
+    single: &id001
+    - bracket: 2400
+      rate: 1.4
+    - bracket: 4800
+      rate: 3.2
+    - bracket: 9600
+      rate: 5.5
+    - bracket: 14400
+      rate: 6.4
+    - bracket: 19200
+      rate: 6.8
+    - bracket: 24000
+      rate: 7.2
+    - bracket: 36000
+      rate: 7.6
+    - bracket: 48000
+      rate: 7.9
+    - bracket: 150000
+      rate: 8.25
+    - bracket: 175000
+      rate: 9
+    - bracket: 200000
+      rate: 10
+    - bracket: null
+      rate: 11
+    married_filing_jointly: &id002
+    - bracket: 4800
+      rate: 1.4
+    - bracket: 9600
+      rate: 3.2
+    - bracket: 19200
+      rate: 5.5
+    - bracket: 28800
+      rate: 6.4
+    - bracket: 38400
+      rate: 6.8
+    - bracket: 48000
+      rate: 7.2
+    - bracket: 72000
+      rate: 7.6
+    - bracket: 96000
+      rate: 7.9
+    - bracket: 300000
+      rate: 8.25
+    - bracket: 350000
+      rate: 9
+    - bracket: 400000
+      rate: 10
+    - bracket: null
+      rate: 11
+    married_filing_separately: *id001
+    head_of_household:
+    - bracket: 3600
+      rate: 1.4
+    - bracket: 7200
+      rate: 3.2
+    - bracket: 14400
+      rate: 5.5
+    - bracket: 21600
+      rate: 6.4
+    - bracket: 28800
+      rate: 6.8
+    - bracket: 36000
+      rate: 7.2
+    - bracket: 54000
+      rate: 7.6
+    - bracket: 72000
+      rate: 7.9
+    - bracket: 225000
+      rate: 8.25
+    - bracket: 262500
+      rate: 9
+    - bracket: 300000
+      rate: 10
+    - bracket: null
+      rate: 11
+    qualifying_surviving_spouse: *id002
+capital_gains:
+  treatment: ordinary_schedule
+  calculation_supported: true
 dependent_benefits:
-  - {name: personal_exemption_for_dependent, type: deduction, amount_per_dependent: 1144}
+- id: personal_exemption_for_dependent
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 1144
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rules
+  status: final
+  calculation_supported: true
 other_credits: []

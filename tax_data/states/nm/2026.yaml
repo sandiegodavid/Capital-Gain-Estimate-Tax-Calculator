@@ -3,12 +3,22 @@ jurisdiction: New Mexico
 abbreviation: NM
 currency: USD
 tax_scope: broad_individual_income_tax
-data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+data_status:
+  status: final
+  checked_on: '2026-09-21'
+  unresolved_fields: []
+filing:
+  payment_url: https://tap.state.nm.us/
 sources:
-  rates: {title: "New Mexico personal income-tax rates", url: "https://www.tax.newmexico.gov/all-nm-taxes/current-historic-tax-rates-overview/personal-income-tax-rates/"}
-  overview: {title: "New Mexico personal income-tax overview", url: "https://www.tax.newmexico.gov/individuals/personal-income-tax-information-overview/"}
-  payment: {title: "New Mexico Taxpayer Access Point", url: "https://tap.state.nm.us/"}
-tax_base: {starting_point: federal_adjusted_gross_income_with_new_mexico_adjustments, local_income_taxes_included: false}
+  rates:
+    title: New Mexico personal income-tax rates
+    url: https://www.tax.newmexico.gov/all-nm-taxes/current-historic-tax-rates-overview/personal-income-tax-rates/
+  overview:
+    title: New Mexico personal income-tax overview
+    url: https://www.tax.newmexico.gov/individuals/personal-income-tax-information-overview/
+tax_base:
+  starting_point: federal_adjusted_gross_income_with_new_mexico_adjustments
+  local_income_taxes_included: false
 standard_deduction:
   type: federal_deduction_allowed_in_state_calculation
   calculation_supported: true
@@ -19,16 +29,99 @@ standard_deduction:
   qualifying_surviving_spouse: 32200
 brackets:
   ordinary:
-    single: [{bracket: 5500, rate: 1.5}, {bracket: 16500, rate: 3.2}, {bracket: 33500, rate: 4.3}, {bracket: 66500, rate: 4.7}, {bracket: 210000, rate: 4.9}, {bracket: null, rate: 5.9}]
-    married_filing_jointly: &joint [{bracket: 8000, rate: 1.5}, {bracket: 25000, rate: 3.2}, {bracket: 50000, rate: 4.3}, {bracket: 100000, rate: 4.7}, {bracket: 315000, rate: 4.9}, {bracket: null, rate: 5.9}]
-    married_filing_separately: [{bracket: 4000, rate: 1.5}, {bracket: 12500, rate: 3.2}, {bracket: 25000, rate: 4.3}, {bracket: 50000, rate: 4.7}, {bracket: 157500, rate: 4.9}, {bracket: null, rate: 5.9}]
-    head_of_household: *joint
-    qualifying_surviving_spouse: *joint
+    single:
+    - bracket: 5500
+      rate: 1.5
+    - bracket: 16500
+      rate: 3.2
+    - bracket: 33500
+      rate: 4.3
+    - bracket: 66500
+      rate: 4.7
+    - bracket: 210000
+      rate: 4.9
+    - bracket: null
+      rate: 5.9
+    married_filing_jointly: &id001
+    - bracket: 8000
+      rate: 1.5
+    - bracket: 25000
+      rate: 3.2
+    - bracket: 50000
+      rate: 4.3
+    - bracket: 100000
+      rate: 4.7
+    - bracket: 315000
+      rate: 4.9
+    - bracket: null
+      rate: 5.9
+    married_filing_separately:
+    - bracket: 4000
+      rate: 1.5
+    - bracket: 12500
+      rate: 3.2
+    - bracket: 25000
+      rate: 4.3
+    - bracket: 50000
+      rate: 4.7
+    - bracket: 157500
+      rate: 4.9
+    - bracket: null
+      rate: 5.9
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
 capital_gains:
   treatment: deduction_then_ordinary_schedule
   calculation_supported: true
-  deduction: {greater_of: [{fixed_amount: 1000}, {percent_of_net_capital_gain: 40}]}
+  deduction:
+    greater_of:
+    - fixed_amount: 1000
+    - percent_of_net_capital_gain: 40
 dependent_benefits:
-  - {name: exemption_for_certain_dependents, type: deduction, amount_per_qualifying_dependent_beyond_first: 4000, filing_statuses: [married_filing_jointly, head_of_household]}
-  - {name: child_income_tax_credit, type: refundable_credit, amount_varies_by_income_and_child_age: true, calculation_supported: false}
+- id: exemption_for_certain_dependents
+  benefit_type: deduction
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: null
+  phaseout:
+    calculation_supported: false
+  refundability: false
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rates
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
+- id: child_income_tax_credit
+  benefit_type: refundable_credit
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: null
+  phaseout:
+    calculation_supported: false
+  refundability: true
+  tax_liability_limit: false
+  source_tax_year: 2026
+  source: rates
+  status: final
+  calculation_supported: false
+  unsupported_reason: Eligibility, income-limit, phaseout, age, residency, or current-year formula is not fully encoded.
 other_credits: []

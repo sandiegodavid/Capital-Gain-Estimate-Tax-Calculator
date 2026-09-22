@@ -8,10 +8,11 @@ data_status:
   checked_on: "2026-09-21"
   unresolved_fields: [zero_rate_thresholds]
   note: "The latest published return schedule is tax year 2025; the 2026 final return instructions are not yet available."
+filing:
+  payment_url: "https://tax.idaho.gov/online-services/e-pay/"
 sources:
   rates: {title: "Idaho individual income-tax rate schedule", url: "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/"}
   2026_changes: {title: "Idaho withholding tables updated for 2026", url: "https://tax.idaho.gov/pressrelease/withholding-tables-updated-for-2026/"}
-  payment: {title: "Idaho e-pay", url: "https://tax.idaho.gov/online-services/e-pay/"}
 tax_base: {starting_point: federal_taxable_income_with_idaho_adjustments, local_income_taxes_included: false}
 standard_deduction:
   type: federal_in_tax_base

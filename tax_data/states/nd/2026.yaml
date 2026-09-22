@@ -4,10 +4,11 @@ abbreviation: ND
 currency: USD
 tax_scope: broad_individual_income_tax
 data_status: {status: final, checked_on: "2026-09-21", unresolved_fields: []}
+filing:
+  payment_url: "https://tap.tax.nd.gov/"
 sources:
   rules: {title: "2026 North Dakota Form ND-1ES", url: "https://www.tax.nd.gov/sites/www/files/documents/forms/individual/2025-iit/28709-form-nd-1es-2026.pdf"}
   capital_gains: {title: "North Dakota individual income-tax instructions", url: "https://www.tax.nd.gov/sites/www/files/documents/forms/software-developer/individual-income-forms/2025-iit-instructions.pdf"}
-  payment: {title: "North Dakota Taxpayer Access Point", url: "https://tap.tax.nd.gov/"}
 tax_base: {starting_point: federal_taxable_income_with_north_dakota_adjustments, local_income_taxes_included: false}
 standard_deduction:
   type: federal_in_tax_base

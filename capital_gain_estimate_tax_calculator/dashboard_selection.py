@@ -11,7 +11,6 @@ from .service import default_output_dir
 from .settings import available_report_years, realized_gains_root
 from .validation import parse_year
 
-
 FormValues = dict[str, list[str]]
 RecordsRootProvider = Callable[[], Path | None]
 SOURCE_SELECTION_MARKER = "source_selection"

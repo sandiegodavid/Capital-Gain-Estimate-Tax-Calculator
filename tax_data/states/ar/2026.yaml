@@ -5,13 +5,20 @@ currency: USD
 tax_scope: broad_individual_income_tax
 data_status:
   status: final
-  checked_on: "2026-09-21"
+  checked_on: '2026-09-21'
   unresolved_fields: []
+filing:
+  payment_url: https://www.dfa.arkansas.gov/online-services/taxpayers/
 sources:
-  rates: {title: "2026 Arkansas Form AR1000ES", url: "https://www.dfa.arkansas.gov/wp-content/uploads/2026_Final_AR1000ES_1.pdf"}
-  deductions_and_dependents: {title: "Arkansas individual income-tax forms", url: "https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/forms/"}
-  payment: {title: "Arkansas taxpayer services", url: "https://www.dfa.arkansas.gov/online-services/taxpayers/"}
-tax_base: {starting_point: state_adjusted_gross_income, local_income_taxes_included: false}
+  rates:
+    title: 2026 Arkansas Form AR1000ES
+    url: https://www.dfa.arkansas.gov/wp-content/uploads/2026_Final_AR1000ES_1.pdf
+  deductions_and_dependents:
+    title: Arkansas individual income-tax forms
+    url: https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/forms/
+tax_base:
+  starting_point: state_adjusted_gross_income
+  local_income_taxes_included: false
 standard_deduction:
   type: state_fixed
   calculation_supported: true
@@ -22,18 +29,53 @@ standard_deduction:
   qualifying_surviving_spouse: 2470
 brackets:
   ordinary:
-    single: &all [{bracket: 5599, rate: 0}, {bracket: 11199, rate: 2}, {bracket: 15999, rate: 3}, {bracket: 26399, rate: 3.4}, {bracket: null, rate: 3.9}]
-    married_filing_jointly: *all
-    married_filing_separately: *all
-    head_of_household: *all
-    qualifying_surviving_spouse: *all
+    single: &id001
+    - bracket: 5599
+      rate: 0
+    - bracket: 11199
+      rate: 2
+    - bracket: 15999
+      rate: 3
+    - bracket: 26399
+      rate: 3.4
+    - bracket: null
+      rate: 3.9
+    married_filing_jointly: *id001
+    married_filing_separately: *id001
+    head_of_household: *id001
+    qualifying_surviving_spouse: *id001
 capital_gains:
   treatment: percentage_exclusion_then_ordinary_schedule
   exclusion_percent: 50
   calculation_supported: true
 dependent_benefits:
-  - {name: dependent_personal_tax_credit, type: nonrefundable_credit, amount_per_dependent: 29}
+- id: dependent_personal_tax_credit
+  benefit_type: nonrefundable_credit
+  eligibility_basis: state_eligible_dependent
+  eligibility_requirements: []
+  income_measure: state_agi
+  filing_statuses:
+  - single
+  - married_filing_jointly
+  - married_filing_separately
+  - head_of_household
+  - qualifying_surviving_spouse
+  calculation:
+    method: fixed_per_dependent
+    amount: 29
+  phaseout:
+    calculation_supported: true
+    method: none
+  refundability: false
+  tax_liability_limit: true
+  source_tax_year: 2026
+  source: rates
+  status: final
+  calculation_supported: true
 other_credits:
-  - {name: taxpayer_personal_tax_credit, type: nonrefundable_credit, amount_per_qualifying_box: 29}
+- name: taxpayer_personal_tax_credit
+  type: nonrefundable_credit
+  amount_per_qualifying_box: 29
 calculation_notes:
-  - "A special adjustment table applies from $94,701 through $97,800 of net taxable income; implement that table before using this as a complete Arkansas calculator."
+- A special adjustment table applies from $94,701 through $97,800 of net taxable income; implement that table before using
+  this as a complete Arkansas calculator.

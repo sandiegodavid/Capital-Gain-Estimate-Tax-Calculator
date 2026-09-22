@@ -7,6 +7,9 @@ tax_year: 2026
 jurisdiction: federal
 currency: USD
 
+filing:
+  payment_url: "https://www.irs.gov/payments"
+
 sources:
   ordinary_income_brackets:
     title: "Revenue Procedure 2025-32, 2026 Tax Rate Tables"

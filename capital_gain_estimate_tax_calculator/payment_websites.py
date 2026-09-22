@@ -1,4 +1,4 @@
-"""Official tax-payment destinations loaded from the bundled reference file."""
+"""Official tax-payment destinations embedded in jurisdiction tax data."""
 
 from __future__ import annotations
 
@@ -7,8 +7,7 @@ from pathlib import Path
 
 import yaml
 
-
-REFERENCE_PATH = Path(__file__).resolve().parent.parent / "reference" / "income_tax_payment_websites.yaml"
+TAX_DATA_ROOT = Path(__file__).resolve().parent.parent / "tax_data"
 
 
 @dataclass(frozen=True)
@@ -21,17 +20,22 @@ class PaymentWebsite:
 
 def payment_website(abbreviation: str) -> PaymentWebsite | None:
     """Return the official payment destination for a federal or state abbreviation."""
+    normalized = abbreviation.upper()
+    if normalized == "US":
+        path = TAX_DATA_ROOT / "federal" / "2026.yaml"
+    elif len(normalized) == 2 and normalized.isalpha():
+        path = TAX_DATA_ROOT / "states" / normalized.lower() / "2026.yaml"
+    else:
+        return None
     try:
-        entries = yaml.safe_load(REFERENCE_PATH.read_text(encoding="utf-8"))
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError):
         return None
-    if not isinstance(entries, list):
+    if not isinstance(data, dict):
         return None
-    for entry in entries:
-        if not isinstance(entry, dict) or entry.get("abbreviation") != abbreviation:
-            continue
-        jurisdiction = entry.get("jurisdiction")
-        url = entry.get("payment_url")
-        if isinstance(jurisdiction, str) and isinstance(url, str) and url.startswith("https://"):
-            return PaymentWebsite(jurisdiction, url)
+    jurisdiction = data.get("jurisdiction")
+    filing = data.get("filing")
+    url = filing.get("payment_url") if isinstance(filing, dict) else None
+    if isinstance(jurisdiction, str) and isinstance(url, str) and url.startswith("https://"):
+        return PaymentWebsite(jurisdiction, url)
     return None
