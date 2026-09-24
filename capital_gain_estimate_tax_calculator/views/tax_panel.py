@@ -34,7 +34,6 @@ class TaxPanelViewModel:
     dependent_credit_estimate: FederalDependentCreditEstimate
     rate_mapping: TaxRateMapping
     state_name: str | None
-    needs_state_dependents: bool
     federal_payment_url: str | None
     state_payment_url: str | None
 
@@ -57,7 +56,7 @@ def render_tax_panel(view: TaxPanelViewModel) -> str:
         f"{federal_payment_button}{state_payment}</div>{render_formula_button(formula)}"
         f"{render_tax_rules_modal(rules)}</div>"
     )
-    fields = _tax_fields(assumptions, state_options, view.needs_state_dependents)
+    fields = _tax_fields(assumptions, state_options)
     state_estimate = currency(estimate.state) if rules.state_calculation_supported else "Unavailable"
     rate_cards = render_rate_cards(
         view.rate_mapping,
@@ -89,7 +88,7 @@ def render_tax_panel(view: TaxPanelViewModel) -> str:
     <form id="tax-estimate-form" method="get" action="/dashboard" class="tax-form"><input type="hidden" name="year" value="{view.selection.year}"><input type="hidden" name="source" value="{escape(view.selection.source_dir)}"><input type="hidden" name="output" value="{escape(view.selection.output_dir)}">{selection_inputs}{fields}<button class="tax-form-action" type="submit">Update estimate</button></form>
     <div id="tax-estimate-output">{rate_cards}{credit_summary}{render_state_dependent_benefits(formula.state_dependent_benefits, view.state_name)}<div class="tax-results"><article><p>Federal estimate</p><strong>{currency(estimate.federal)}</strong></article><article><p>State estimate{f" · {assumptions.state_code}" if assumptions.state_code else ""}</p><strong>{state_estimate}</strong></article><article><p>Estimated total calculated tax</p><strong>{currency(estimate.total)}</strong></article></div>{formula_summary}{state_requirement}<p class="tax-note">Calculated from the bundled {view.selection.year} jurisdiction rules. Federal and state credits shown separately are not deducted from this gains-only tax estimate. Out of scope: the refundable Additional Child Tax Credit (ACTC), Earned Income Tax Credit (EITC), and special rules marked unsupported in the local YAML.</p></div>
     <p id="tax-estimate-stale" class="tax-estimate-stale" role="status" hidden>Estimate inputs changed. Click <button class="tax-estimate-stale-action" type="submit" form="tax-estimate-form">Update estimate</button> to calculate with these values.</p>
-    <script>(()=>{{const form=document.querySelector(".tax-form"),output=document.getElementById("tax-estimate-output"),stale=document.getElementById("tax-estimate-stale"),stateDependents=document.getElementById("state-eligible-dependents"),key="capital-gain-estimate-scroll-y",saved=sessionStorage.getItem(key);let updateTimer;const clearEstimate=()=>{{window.clearTimeout(updateTimer);if(output&&stale){{output.hidden=true;stale.hidden=false;}}}},submitEstimate=()=>{{window.clearTimeout(updateTimer);if(form?.checkValidity()){{form.requestSubmit();}}}},queueEstimateUpdate=()=>{{window.clearTimeout(updateTimer);updateTimer=window.setTimeout(submitEstimate,350);}};if(saved!==null){{sessionStorage.removeItem(key);requestAnimationFrame(()=>window.scrollTo(0,Number(saved)));}}form?.querySelector("#state-residence")?.addEventListener("change",()=>{{if(stateDependents)stateDependents.value="";clearEstimate();}});form?.querySelector("#filing-status")?.addEventListener("change",clearEstimate);form?.querySelectorAll("#qualified-children,#other-dependents,#state-eligible-dependents,#ordinary-income,#short-term-carryover-loss,#long-term-carryover-loss").forEach(control=>{{control.addEventListener("input",queueEstimateUpdate);control.addEventListener("change",submitEstimate);}});form?.addEventListener("submit",()=>sessionStorage.setItem(key,String(window.scrollY)));}})();</script></section>'''
+    </section>'''
 
 
 def _payment_button(url: str | None, label: str, class_suffix: str = "") -> str:
@@ -100,19 +99,7 @@ def _payment_button(url: str | None, label: str, class_suffix: str = "") -> str:
     )
 
 
-def _tax_fields(assumptions: TaxAssumptions, state_options: str, needs_state_dependents: bool) -> str:
-    state_dependents = (
-        _tax_field(
-            "State-eligible dependents",
-            "state-eligible-dependents",
-            f'<input id="state-eligible-dependents" name="state_eligible_dependents" type="number" min="0" max="99" step="1" value="{"" if assumptions.state_eligible_dependents is None else assumptions.state_eligible_dependents}">',
-            "Count only dependents who meet this state's definition. Federal CTC/ODC counts do not establish state eligibility.",
-            "end",
-            "tax-field-second-row",
-        )
-        if needs_state_dependents
-        else ""
-    )
+def _tax_fields(assumptions: TaxAssumptions, state_options: str) -> str:
     return "".join(
         (
             _tax_field(
@@ -150,7 +137,6 @@ def _tax_fields(assumptions: TaxAssumptions, state_options: str, needs_state_dep
                 "end",
                 "tax-field-second-row",
             ),
-            state_dependents,
             _tax_field(
                 "Short-term loss carryover ($)",
                 "short-term-carryover-loss",

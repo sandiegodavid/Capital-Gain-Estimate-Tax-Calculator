@@ -38,7 +38,12 @@ def render_state_dependent_benefits(benefits, state_name: str | None) -> str:
         else:
             qualifier = " Uses provisional prior-year parameters." if line.provisional else ""
             items.append(f"{label}: informational only; not calculated. {line.explanation}{qualifier}")
-    return f'<aside class="tax-credit-summary" role="note"><strong>Estimated {escape(name)} child/dependent benefits</strong><span>{escape(" ".join(items))}</span></aside>'
+    proxy_notice = (
+        "For now, this uses the combined CTC-eligible children and other "
+        "credit-eligible dependents as a planning proxy for state eligibility; "
+        "state-specific eligibility is not separately confirmed."
+    )
+    return f'<aside class="tax-credit-summary" role="note"><strong>Estimated {escape(name)} child/dependent benefits</strong><span>{escape(proxy_notice + " " + " ".join(items))}</span></aside>'
 
 
 def render_rate_cards(

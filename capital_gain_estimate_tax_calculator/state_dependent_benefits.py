@@ -123,11 +123,20 @@ def estimate_state_dependent_benefits(
     """Evaluate a declared rule; amounts alone never authorize calculation."""
     typed_rules = rules.dependent_benefit_rules
     if typed_rules:
+        eligibility = dict(state_eligibility)
+        # The dashboard currently asks only for confirmed federal dependent
+        # counts.  They are the temporary planning proxy for a state-eligible
+        # dependent count, while age/adoption/college requirements remain
+        # separate, required inputs.
+        eligibility.setdefault(
+            "state_eligible_dependents",
+            assumptions.qualified_children + assumptions.other_dependents,
+        )
         context = BenefitContext(
             assumptions.filing_status,
             assumptions.qualified_children,
             assumptions.other_dependents,
-            state_eligibility,
+            eligibility,
             income_context,
             state_tax_liability,
         )

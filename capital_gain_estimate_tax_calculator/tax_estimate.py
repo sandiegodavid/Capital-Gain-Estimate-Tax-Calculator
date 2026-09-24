@@ -323,9 +323,12 @@ def calculate_tax_formula(request: TaxCalculationRequest) -> TaxFormula:
     federal_deduction = calculation_rules.federal_standard_deduction
     state_deduction = calculation_rules.state_standard_deduction
     benefit_assumptions = request.assumptions or TaxAssumptions(filing_status=filing_status)
-    eligibility = {}
-    if benefit_assumptions.state_eligible_dependents is not None:
-        eligibility["state_eligible_dependents"] = benefit_assumptions.state_eligible_dependents
+    # State-specific dependent eligibility is not collected yet.  Until it is,
+    # use the two explicitly confirmed federal dependent counts as a planning
+    # proxy; the rendered estimate discloses that limitation.
+    eligibility = {
+        "state_eligible_dependents": benefit_assumptions.qualified_children + benefit_assumptions.other_dependents
+    }
     state_benefits = estimate_state_dependent_benefits(
         rules,
         benefit_assumptions,

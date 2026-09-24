@@ -907,8 +907,8 @@ class TaxPanelRenderingTests(IntegrationTestCase):
         self.assertNotIn("rate guidance", page.lower())
         self.assertIn('name="qualified_children"', page)
         self.assertIn('name="other_dependents"', page)
-        self.assertIn('name="state_eligible_dependents"', page)
-        self.assertIn("State-eligible dependents", page)
+        self.assertNotIn('name="state_eligible_dependents"', page)
+        self.assertNotIn("State-eligible dependents", page)
         self.assertIn('name="other_ordinary_taxable_income"', page)
         self.assertIn("Short-term loss carryover ($)", page)
         self.assertIn("Long-term loss carryover ($)", page)
@@ -917,8 +917,10 @@ class TaxPanelRenderingTests(IntegrationTestCase):
         self.assertIn('name="other_ordinary_taxable_income" type="number"', page)
         self.assertLess(page.index('id="ordinary-income"'), page.index('id="short-term-carryover-loss"'))
         self.assertLess(page.index('id="short-term-carryover-loss"'), page.index('id="long-term-carryover-loss"'))
+        self.assertLess(page.index('id="long-term-carryover-loss"'), page.index('class="tax-form-action"'))
         self.assertIn(".tax-field-second-row { grid-row:2 }", page)
         self.assertIn(".tax-form { grid-template-columns:repeat(4,minmax(160px,1fr));", page)
+        self.assertIn("grid-column:4; grid-row:2", page)
         self.assertNotIn('name="modified_adjusted_gross_income"', page)
         self.assertIn(
             "wages; taxable interest and dividends; retirement or taxable Social Security income; business or self-employment income; rental or K-1 income; income not included in the imported realized-gains files; and any other taxable income.",
@@ -947,18 +949,29 @@ class TaxPanelRenderingTests(IntegrationTestCase):
         self.assertIn('id="tax-estimate-stale"', page)
         self.assertIn('id="tax-estimate-form"', page)
         self.assertIn(
+            "For now, this uses the combined CTC-eligible children and other credit-eligible dependents as a planning proxy for state eligibility",
+            page,
+        )
+        self.assertIn(
             'Estimate inputs changed. Click <button class="tax-estimate-stale-action" type="submit" form="tax-estimate-form">Update estimate</button> to calculate with these values.',
             page,
         )
-        self.assertIn("saved=sessionStorage.getItem(key)", page)
-        self.assertIn("output.hidden=true;stale.hidden=false", page)
-        self.assertIn('stateDependents=document.getElementById("state-eligible-dependents")', page)
-        self.assertIn('stateDependents.value=""', page)
+
+    def test_tax_input_script_clears_only_profile_changes_and_replaces_other_results_in_place(self) -> None:
+        script = load_static_asset("/static/dashboard.js")
+
+        self.assertIsNotNone(script)
+        assert script is not None
+        source = script.payload.decode("utf-8")
+        self.assertIn('querySelectorAll("#state-residence,#filing-status")', source)
         self.assertIn(
-            "#qualified-children,#other-dependents,#state-eligible-dependents,#ordinary-income,#short-term-carryover-loss,#long-term-carryover-loss",
-            page,
+            'querySelectorAll("#qualified-children,#other-dependents,#ordinary-income,#short-term-carryover-loss,#long-term-carryover-loss")',
+            source,
         )
-        self.assertIn("form.requestSubmit()", page)
+        self.assertIn("setTimeout(updateEstimate, 350)", source)
+        self.assertIn("fetch(url, { signal: activeEstimateRequest.signal })", source)
+        self.assertIn("output.replaceWith(updatedOutput)", source)
+        self.assertIn("event.preventDefault()", source)
 
     def test_tax_panel_renderer_uses_prebuilt_view_model(self) -> None:
         report = normalize_sources(self.source, 2026)
@@ -1025,16 +1038,20 @@ class TaxCalculationAndBenefitTests(IntegrationTestCase):
         )
         self.assertEqual(georgia.standard_deduction("state"), Decimal("30000"))
 
-    def test_state_dependent_benefits_require_state_confirmation_and_keep_credits_separate(self) -> None:
+    def test_state_dependent_benefits_use_confirmed_federal_counts_as_a_temporary_proxy(self) -> None:
         georgia = TaxRuleStore().load(2026, "GA", "single")
-        assumptions = TaxAssumptions(state_code="GA", state_eligible_dependents=2)
+        assumptions = TaxAssumptions(state_code="GA", qualified_children=1, other_dependents=1)
         formula = build_tax_formula(georgia, Decimal("60000"), Decimal("1000"), Decimal("0"), assumptions=assumptions)
         self.assertEqual(formula.state_standard_deduction, Decimal("15000"))
         self.assertEqual(formula.state_dependent_deduction, Decimal("10000"))
-        missing = estimate_state_dependent_benefits(
-            georgia, TaxAssumptions(state_code="GA"), {"state_agi": Decimal("60000")}, {}
+        inferred = estimate_state_dependent_benefits(
+            georgia,
+            TaxAssumptions(state_code="GA", qualified_children=1, other_dependents=1),
+            {"state_agi": Decimal("60000")},
+            {},
         )
-        self.assertEqual(missing.lines[0].outcome, "requires_more_inputs")
+        self.assertEqual(inferred.lines[0].outcome, "calculated")
+        self.assertEqual(inferred.deduction, Decimal("10000"))
 
         arkansas = TaxRuleStore().load(2026, "AR", "single")
         credit = estimate_state_dependent_benefits(

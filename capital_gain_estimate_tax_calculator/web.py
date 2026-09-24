@@ -95,7 +95,6 @@ def _tax_panel_view_model(
             state_mapping.state,
         ),
         state_name=selected_state,
-        needs_state_dependents=bool(rules.dependent_benefit_rules),
         federal_payment_url=federal_payment.url if federal_payment else None,
         state_payment_url=(
             state_payment.url
